@@ -1,0 +1,28 @@
+{
+    "iisSettings": {
+        "windowsAuthentication": false,
+        "anonymousAuthentication": true,
+        "iisExpress": {
+            "applicationUrl": "https://localhost:44389",
+            "sslPort": 44389
+        }
+    },
+    "profiles": {
+        "IIS Express": {
+            "commandName": "IISExpress",
+            "launchBrowser": true,
+            "environmentVariables": {
+                "ASPNETCORE_ENVIRONMENT": "Development"
+            }
+        },
+        "Tulumba.HttpApi.Host": {
+            "commandName": "Project",
+            "hotReloadProfile": "aspnetcore",
+            "launchBrowser": true,
+            "applicationUrl": "https://localhost:44389",
+            "environmentVariables": {
+                "ASPNETCORE_ENVIRONMENT": "Development"
+            }
+        }
+    }
+}

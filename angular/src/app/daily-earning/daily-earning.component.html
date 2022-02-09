@@ -1,0 +1,204 @@
+<div class="card">
+  <div class="card-header">
+    <div class="row">
+      <div class="col col-md-6">
+        <h5 class="card-title">{{ '::Menu:DailyEarnings' | abpLocalization }}</h5>
+      </div>
+      <div class="text-right col col-md-6">
+        <div class="text-lg-right pt-2">
+          <button
+            *abpPermission="'Tulumba.DailyEarnings.Create'"
+            id="create"
+            class="btn btn-primary"
+            type="button"
+            (click)="createDailyEarning()"
+          >
+            <i class="fa fa-plus mr-1"></i>
+            <span>{{ '::NewEntry' | abpLocalization }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="sum">
+      <h5>
+        {{ '::DailyEarnings:Sum' | abpLocalization }}:
+        {{ sum.toLocaleString('en-US', { minimumFractionDigits: 2 }) }} KM
+      </h5>
+    </div>
+    <div class="row">
+      <mat-expansion-panel hideToggle class="filter-expansion-panel">
+        <mat-expansion-panel-header>
+          <mat-panel-title> {{ '::Filter' | abpLocalization }} </mat-panel-title>
+        </mat-expansion-panel-header>
+        <div>
+          <form [formGroup]="filterForm" (change)="filter()">
+            <div class="form-group filter-form-input">
+              <label for="shop-id">{{ '::DailyEarnings:ShopId' | abpLocalization }}</label
+              ><span> * </span>
+              <select class="form-control" id="shop-id" formControlName="shopId">
+                <option [ngValue]="type.id" *ngFor="let type of shops">{{ type.name }}</option>
+              </select>
+            </div>
+            <div class="form-group filter-form-input">
+              <label>{{ '::Filter:DateLTE' | abpLocalization }}</label
+              ><span> * </span>
+              <input
+                #datepicker2="ngbDatepicker"
+                class="form-control"
+                name="datepicker"
+                formControlName="dateLTE"
+                ngbDatepicker
+                (click)="datepicker2.toggle()"
+                (dateSelect)="filter()"
+              />
+            </div>
+            <div class="form-group filter-form-input">
+              <label>{{ '::Filter:DateGTE' | abpLocalization }}</label
+              ><span> * </span>
+              <input
+                #datepicker1="ngbDatepicker"
+                class="form-control"
+                name="datepicker"
+                formControlName="dateGTE"
+                ngbDatepicker
+                (click)="datepicker1.toggle()"
+                (dateSelect)="filter()"
+              />
+            </div>
+          </form>
+        </div>
+        <div class="text-right col col-md-6">
+          <button
+            id="refresh-filter"
+            class="btn btn-primary"
+            type="button"
+            (click)="refreshFilter()"
+          >
+            <i class="fa fa-refresh mr-1"></i>
+            <span>{{ '::Filter:Refresh' | abpLocalization }}</span>
+          </button>
+        </div>
+      </mat-expansion-panel>
+    </div>
+  </div>
+
+  <div class="card-body">
+    <ngx-datatable
+      [rows]="dailyEarning.items"
+      [count]="dailyEarning.totalCount"
+      [list]="list"
+      default
+    >
+      <ngx-datatable-column [name]="'::DailyEarnings:ShopId' | abpLocalization" prop="shopId">
+        <ng-template let-row="row" ngx-datatable-cell-template>
+          {{ getShopName(row.shopId) }}
+        </ng-template>
+      </ngx-datatable-column>
+      <ngx-datatable-column [name]="'::DailyEarnings:Date' | abpLocalization" prop="date">
+        <ng-template let-row="row" ngx-datatable-cell-template>
+          {{ row.date | date: 'dd.MM.YYYY.' }}
+        </ng-template>
+      </ngx-datatable-column>
+      <ngx-datatable-column
+        [name]="'::DailyEarnings:EarningAmount' | abpLocalization"
+        prop="amount"
+      >
+        <ng-template let-row="row" ngx-datatable-cell-template>
+          {{ row.earningAmount.toLocaleString('en-US', { minimumFractionDigits: 2 }) }}
+        </ng-template>
+      </ngx-datatable-column>
+      <ngx-datatable-column
+        [name]="'::Actions' | abpLocalization"
+        [maxWidth]="150"
+        [sortable]="false"
+      >
+        <ng-template let-row="row" ngx-datatable-cell-template>
+          <div ngbDropdown container="body" class="d-inline-block">
+            <button
+              class="btn btn-primary btn-sm dropdown-toggle"
+              data-toggle="dropdown"
+              aria-haspopup="true"
+              ngbDropdownToggle
+            >
+              <i class="fa fa-cog mr-1"></i>{{ '::Actions' | abpLocalization }}
+            </button>
+            <div ngbDropdownMenu>
+              <button
+                *abpPermission="'Tulumba.DailyEarnings.Edit'"
+                ngbDropdownItem
+                (click)="editDailyEarning(row.id)"
+              >
+                {{ '::Edit' | abpLocalization }}
+              </button>
+              <button
+                *abpPermission="'Tulumba.DailyEarnings.Delete'"
+                ngbDropdownItem
+                (click)="delete(row.id)"
+              >
+                {{ '::Delete' | abpLocalization }}
+              </button>
+            </div>
+          </div>
+        </ng-template>
+      </ngx-datatable-column>
+    </ngx-datatable>
+  </div>
+</div>
+
+<!-- Add the modal here -->
+<abp-modal [(visible)]="isModalOpen">
+  <ng-template #abpHeader>
+    <h3>{{ (selectedDailyEarning.id ? '::Edit' : '::NewEntry') | abpLocalization }}</h3>
+  </ng-template>
+
+  <ng-template #abpBody>
+    <form [formGroup]="form" (ngSubmit)="save()">
+      <div class="form-group">
+        <label for="shop-id">{{ '::DailyEarnings:ShopId' | abpLocalization }}</label
+        ><span> * </span>
+        <select class="form-control" id="shop-id" formControlName="shopId">
+          <option [ngValue]="type.id" *ngFor="let type of shops">{{ type.name }}</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>{{ '::DailyEarnings:Date' | abpLocalization }}</label
+        ><span> * </span>
+        <input
+          #datepicker="ngbDatepicker"
+          class="form-control"
+          name="datepicker"
+          formControlName="date"
+          ngbDatepicker
+          (click)="datepicker.toggle()"
+          ngbDatepicker
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="daily-earning-earning-amount">{{
+          '::DailyEarnings:EarningAmount' | abpLocalization
+        }}</label
+        ><span> * </span>
+        <input
+          type="number"
+          id="daily-earning-earning-amount"
+          class="form-control"
+          formControlName="earningAmount"
+        />
+      </div>
+    </form>
+  </ng-template>
+
+  <ng-template #abpFooter>
+    <button type="button" class="btn btn-secondary" abpClose>
+      {{ '::Close' | abpLocalization }}
+    </button>
+
+    <!--added save button-->
+    <button class="btn btn-primary" (click)="save()" [disabled]="form.invalid">
+      <i class="fa fa-check mr-1"></i>
+      {{ '::Save' | abpLocalization }}
+    </button>
+  </ng-template>
+</abp-modal>
