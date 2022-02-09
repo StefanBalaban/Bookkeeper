@@ -139,6 +139,8 @@ namespace Tulumba
                             HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
                     };
                 });
+
+            context.Services.AddSameSiteCookiePolicy();
         }
 
         private static void ConfigureSwaggerServices(ServiceConfigurationContext context, IConfiguration configuration)
@@ -240,6 +242,7 @@ namespace Tulumba
             app.UseAuditing();
             app.UseAbpSerilogEnrichers();
             app.UseConfiguredEndpoints();
+            app.UseCookiePolicy();
         }
     }
 }

@@ -1,0 +1,59 @@
+version: '3.4'
+
+services:
+  db:
+    image: postgres
+    environment:
+      POSTGRES_PASSWORD: example
+    ports:
+      - 5432:5432
+    networks: 
+      - bookkeepernet
+  db-migrator:
+    build:
+      context: ./aspnet-core
+      dockerfile: ./Dockerfile.DbMigrator
+    environment: 
+      - ConnectionStrings:Default=Server=db;Port=5432;Database=tulumba;User ID=postgres;Password=example;
+      - IdentityServer:Clients:Tulumba_App:RootUrl=http://localhost
+      - IdentityServer:Clients:Tulumba_Swagger:RootUrl=http://localhost:44389
+    networks:
+      - bookkeepernet
+    links:
+      - db
+    depends_on:
+      - db
+  api:
+    build:
+      context: ./aspnet-core
+      dockerfile: ./Dockerfile.Api
+    environment: 
+      - ConnectionStrings:Default=Server=db;Port=5432;Database=tulumba;User ID=postgres;Password=example;
+      - AuthServer:Authority=http://localhost:44389
+      - App:SelfUrl=http://localhost:44389
+      - App:ClientUrl=http://localhost
+      - App:CorsOrigins=http://localhost,http://localhost:44389
+      - App:RedirectAllowedUrls=http://localhost,http://localhost:44389
+    ports:
+      - 127.0.0.1:44389:44389
+    networks:
+      - bookkeepernet
+    links:
+      - db
+    depends_on:
+      - db-migrator
+  app:
+    build:
+      context: ./angular
+      dockerfile: ./Dockerfile
+    ports:
+      - 127.0.0.1:80:80
+    networks:
+      - bookkeepernet
+    links:
+      - api
+    depends_on:
+      - api
+networks:
+  bookkeepernet:
+    driver: bridge
