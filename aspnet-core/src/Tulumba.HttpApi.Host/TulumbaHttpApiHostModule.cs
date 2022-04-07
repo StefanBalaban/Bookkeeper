@@ -4,13 +4,16 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using IdentityServer4.Configuration;
+using IdentityServer4.Extensions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Cors;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
+using Serilog;
 using Tulumba.EntityFrameworkCore;
 using Tulumba.MultiTenancy;
 using Volo.Abp;
@@ -67,7 +70,7 @@ namespace Tulumba
 
         private void ConfigureIdentityServer(IConfiguration configuration)
         {
-            Configure<IdentityServerOptions>(options => { options.IssuerUri = configuration["AuthServer:Authority"]; });
+            Configure<IdentityServerOptions>(options => { options.IssuerUri = configuration["AuthServer:Authority"];});
         }
 
         private void ConfigureBundles()
@@ -127,6 +130,7 @@ namespace Tulumba
 
         private void ConfigureAuthentication(ServiceConfigurationContext context, IConfiguration configuration)
         {
+            context.Services.AddSameSiteCookiePolicy();
             context.Services.AddAuthentication()
                 .AddJwtBearer(options =>
                 {
@@ -139,8 +143,6 @@ namespace Tulumba
                             HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
                     };
                 });
-
-            context.Services.AddSameSiteCookiePolicy();
         }
 
         private static void ConfigureSwaggerServices(ServiceConfigurationContext context, IConfiguration configuration)
@@ -194,11 +196,12 @@ namespace Tulumba
         {
             var app = context.GetApplicationBuilder();
             var env = context.GetEnvironment();
-
+            
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
             }
+
 
             app.UseAbpRequestLocalization();
 
@@ -210,12 +213,20 @@ namespace Tulumba
             app.UseCorrelationId();
             app.UseStaticFiles();
             app.UseRouting();
+            app.UseCookiePolicy();
             app.UseCors();
+            
             app.UseForwardedHeaders(new ForwardedHeadersOptions
             {
                 ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
             });
-
+            
+            app.Use(async (httpContext, next) =>
+            {
+                httpContext.SetIdentityServerOrigin(env.BuildConfiguration()["AuthServer:Authority"]);
+                await next.Invoke();
+            });
+            
             app.UseAuthentication();
             app.UseJwtTokenMiddleware();
 
@@ -242,7 +253,6 @@ namespace Tulumba
             app.UseAuditing();
             app.UseAbpSerilogEnrichers();
             app.UseConfiguredEndpoints();
-            app.UseCookiePolicy();
         }
     }
 }

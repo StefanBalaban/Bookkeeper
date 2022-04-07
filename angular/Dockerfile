@@ -1,25 +1,29 @@
 FROM node:14.18.1 as build
 
-# Set the working directory
-WORKDIR /usr/local/app
+WORKDIR /app
 
-# Add the source code to app
-COPY ./ /usr/local/app/
-
-# Install all the dependencies
-RUN npm install
-
-# Generate the build of the application
-RUN npm run build
+COPY package.json yarn.lock replace_env-variables.sh ./
+ARG ANGULAR_CLIENT_URL_BASE
+ARG API_HOST_URL_BASE
+ENV ANGULAR_CLIENT_URL_BASE "$ANGULAR_CLIENT_URL_BASE"
+ENV API_HOST_URL_BASE "$API_HOST_URL_BASE"
 
 
-# Stage 2: Serve app with nginx server
+RUN yarn install
+COPY . .
+RUN yarn build --prod
 
-# Use official nginx image as the base image
-FROM nginx:latest
 
-# Copy the build output to replace the default nginx contents.
-COPY --from=build /usr/local/app/dist/Tulumba /usr/share/nginx/html
+### STAGE 2: Run ###
+FROM nginx as final
+
+## Remove default nginx website
+RUN rm -rf /usr/share/nginx/html/*
+
+COPY --from=build /app/dist/Tulumba /usr/share/nginx/html
+COPY --from=build /app/replace_env-variables.sh /
+
+CMD ["sh", "replace_env-variables.sh"]
 
 # Expose port 80
 EXPOSE 80

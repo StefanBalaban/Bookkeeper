@@ -18,7 +18,7 @@ namespace Microsoft.Extensions.DependencyInjection
             });
 
             return services;
-        }
+        }   
 
         private static void CheckSameSite(HttpContext httpContext, CookieOptions options)
         {

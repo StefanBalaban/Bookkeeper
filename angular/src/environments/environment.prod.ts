@@ -1,17 +1,18 @@
 import { Environment } from '@abp/ng.core';
 
-const baseUrl = 'http://localhost';
+const clientbaseUrl = 'ANGULAR_CLIENT_URL_BASE';
+const hostbaseUrl = 'API_HOST_URL_BASE';
 
 export const environment = {
-  production: false,
+  production: true,
   application: {
-    baseUrl,
+    clientbaseUrl,
     name: 'Tulumba',
     logoUrl: '',
   },
   oAuthConfig: {
-    issuer: 'http://localhost:44389',
-    redirectUri: baseUrl,
+    issuer: hostbaseUrl,
+    redirectUri: clientbaseUrl,
     clientId: 'Tulumba_App',
     responseType: 'code',
     scope: 'offline_access openid profile role email phone Tulumba',
@@ -19,7 +20,7 @@ export const environment = {
   },
   apis: {
     default: {
-      url: 'http://localhost:44389',
+      url: hostbaseUrl,
       rootNamespace: 'Tulumba',
     },
   },

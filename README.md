@@ -21,8 +21,7 @@ To start with docker-compose cd into the root directory of the application and:
 `sudo docker-compose build`
 `sudo docker-compose up`
 
-The application will be available on localhost:80 and the api will be on localhost:44389. 
-**Without further setup for SSL this wil only work with Firefox, on other browsers the application will fail during login due to cookie and anti-forgery token issues.**
+The application will be available on localhost:8082 and the api will be on localhost:8083.
 
 ### With dotnet and npm/yarn
 Requires .NET 5 SDK and runtime, and npm with node version 14.18.0.
@@ -34,6 +33,3 @@ After migrating the database start the HttpApiHost project, from its root direct
 To release for production run `dotnet publish -c Release` and copy the directory with the DLLs.
 #### App
 Inside of the angular project first install the dependencies with `npm i` and then run the application in the development mode with `npm run start`
-
-For production release run `npm run build:prod` and copy the distributables.
-

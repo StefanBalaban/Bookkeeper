@@ -1,10 +1,10 @@
 #See https://aka.ms/containerfastmode to understand how Visual Studio uses this Dockerfile to build your images for faster debugging.
 
-FROM mcr.microsoft.com/dotnet/aspnet:5.0 AS base
+FROM mcr.microsoft.com/dotnet/aspnet:6.0 AS base
 WORKDIR /app
-EXPOSE 44389
- ENV ASPNETCORE_URLS=http://+:44389
-FROM mcr.microsoft.com/dotnet/sdk:5.0 AS build
+EXPOSE 8083
+ ENV ASPNETCORE_URLS=http://+:8083
+FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
 COPY ["*.sln", "."]
 
 COPY ["./src/Tulumba.Application/Tulumba.Application.csproj", "src/Tulumba.Application/"]

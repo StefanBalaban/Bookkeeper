@@ -1,6 +1,6 @@
 import { Environment } from '@abp/ng.core';
 
-const baseUrl = 'https://localhost:4200';
+const baseUrl = 'http://localhost:4200';
 
 export const environment = {
   production: false,
@@ -15,7 +15,7 @@ export const environment = {
     clientId: 'Tulumba_App',
     responseType: 'code',
     scope: 'offline_access openid profile role email phone Tulumba',
-    requireHttps: true
+    requireHttps: false
   },
   apis: {
     default: {
