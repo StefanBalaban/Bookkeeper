@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using IdentityServer4.Configuration;
 using IdentityServer4.Extensions;
@@ -34,225 +35,232 @@ using Volo.Abp.Swashbuckle;
 using Volo.Abp.UI.Navigation.Urls;
 using Volo.Abp.VirtualFileSystem;
 
-namespace Tulumba
+namespace Tulumba;
+
+[DependsOn(
+    typeof(TulumbaHttpApiModule),
+    typeof(AbpAutofacModule),
+    typeof(AbpAspNetCoreMultiTenancyModule),
+    typeof(TulumbaApplicationModule),
+    typeof(TulumbaEntityFrameworkCoreModule),
+    typeof(AbpAspNetCoreMvcUiBasicThemeModule),
+    typeof(AbpAspNetCoreAuthenticationJwtBearerModule),
+    typeof(AbpAccountWebIdentityServerModule),
+    typeof(AbpAspNetCoreSerilogModule),
+    typeof(AbpSwashbuckleModule)
+)]
+public class TulumbaHttpApiHostModule : AbpModule
 {
-    [DependsOn(
-        typeof(TulumbaHttpApiModule),
-        typeof(AbpAutofacModule),
-        typeof(AbpAspNetCoreMultiTenancyModule),
-        typeof(TulumbaApplicationModule),
-        typeof(TulumbaEntityFrameworkCoreModule),
-        typeof(AbpAspNetCoreMvcUiBasicThemeModule),
-        typeof(AbpAspNetCoreAuthenticationJwtBearerModule),
-        typeof(AbpAccountWebIdentityServerModule),
-        typeof(AbpAspNetCoreSerilogModule),
-        typeof(AbpSwashbuckleModule)
-    )]
-    public class TulumbaHttpApiHostModule : AbpModule
+    public override void ConfigureServices(ServiceConfigurationContext context)
     {
-        public override void ConfigureServices(ServiceConfigurationContext context)
+        var configuration = context.Services.GetConfiguration();
+        var hostingEnvironment = context.Services.GetHostingEnvironment();
+
+        ConfigureBundles();
+        ConfigureUrls(configuration);
+        ConfigureConventionalControllers();
+        ConfigureAuthentication(context, configuration);
+        ConfigureLocalization();
+        ConfigureVirtualFileSystem(context);
+        ConfigureCors(context, configuration);
+        ConfigureSwaggerServices(context, configuration);
+        ConfigureIdentityServer(configuration);
+    }
+
+    private void ConfigureIdentityServer(IConfiguration configuration)
+    {
+        Configure<IdentityServerOptions>(options => { options.IssuerUri = configuration["AuthServer:Authority"]; });
+    }
+
+    private void ConfigureBundles()
+    {
+        Configure<AbpBundlingOptions>(options =>
         {
-            var configuration = context.Services.GetConfiguration();
-            var hostingEnvironment = context.Services.GetHostingEnvironment();
+            options.StyleBundles.Configure(
+                BasicThemeBundles.Styles.Global,
+                bundle => { bundle.AddFiles("/global-styles.css"); }
+            );
+        });
+    }
 
-            ConfigureBundles();
-            ConfigureUrls(configuration);
-            ConfigureConventionalControllers();
-            ConfigureAuthentication(context, configuration);
-            ConfigureLocalization();
-            ConfigureVirtualFileSystem(context);
-            ConfigureCors(context, configuration);
-            ConfigureSwaggerServices(context, configuration);
-            ConfigureIdentityServer(configuration);
-
-
-        }
-
-        private void ConfigureIdentityServer(IConfiguration configuration)
+    private void ConfigureUrls(IConfiguration configuration)
+    {
+        Configure<AppUrlOptions>(options =>
         {
-            Configure<IdentityServerOptions>(options => { options.IssuerUri = configuration["AuthServer:Authority"];});
-        }
+            options.Applications["MVC"].RootUrl = configuration["App:SelfUrl"];
+            options.RedirectAllowedUrls.AddRange(configuration["App:RedirectAllowedUrls"].Split(','));
 
-        private void ConfigureBundles()
+            options.Applications["Angular"].RootUrl = configuration["App:ClientUrl"];
+            options.Applications["Angular"].Urls[AccountUrlNames.PasswordReset] = "account/reset-password";
+        });
+    }
+
+    private void ConfigureVirtualFileSystem(ServiceConfigurationContext context)
+    {
+        var hostingEnvironment = context.Services.GetHostingEnvironment();
+
+        if (hostingEnvironment.IsDevelopment())
         {
-            Configure<AbpBundlingOptions>(options =>
+            Configure<AbpVirtualFileSystemOptions>(options =>
             {
-                options.StyleBundles.Configure(
-                    BasicThemeBundles.Styles.Global,
-                    bundle => { bundle.AddFiles("/global-styles.css"); }
-                );
+                options.FileSets.ReplaceEmbeddedByPhysical<TulumbaDomainSharedModule>(
+                    Path.Combine(hostingEnvironment.ContentRootPath,
+                        $"..{Path.DirectorySeparatorChar}Tulumba.Domain.Shared"));
+                options.FileSets.ReplaceEmbeddedByPhysical<TulumbaDomainModule>(
+                    Path.Combine(hostingEnvironment.ContentRootPath,
+                        $"..{Path.DirectorySeparatorChar}Tulumba.Domain"));
+                options.FileSets.ReplaceEmbeddedByPhysical<TulumbaApplicationContractsModule>(
+                    Path.Combine(hostingEnvironment.ContentRootPath,
+                        $"..{Path.DirectorySeparatorChar}Tulumba.Application.Contracts"));
+                options.FileSets.ReplaceEmbeddedByPhysical<TulumbaApplicationModule>(
+                    Path.Combine(hostingEnvironment.ContentRootPath,
+                        $"..{Path.DirectorySeparatorChar}Tulumba.Application"));
             });
         }
+    }
 
-        private void ConfigureUrls(IConfiguration configuration)
+    private void ConfigureConventionalControllers()
+    {
+        Configure<AbpAspNetCoreMvcOptions>(options =>
         {
-            Configure<AppUrlOptions>(options =>
+            options.ConventionalControllers.Create(typeof(TulumbaApplicationModule).Assembly);
+        });
+    }
+
+    private void ConfigureAuthentication(ServiceConfigurationContext context, IConfiguration configuration)
+    {
+        context.Services.AddSameSiteCookiePolicy();
+        context.Services.AddAuthentication()
+            .AddJwtBearer(options =>
             {
-                options.Applications["MVC"].RootUrl = configuration["App:SelfUrl"];
-                options.RedirectAllowedUrls.AddRange(configuration["App:RedirectAllowedUrls"].Split(','));
-
-                options.Applications["Angular"].RootUrl = configuration["App:ClientUrl"];
-                options.Applications["Angular"].Urls[AccountUrlNames.PasswordReset] = "account/reset-password";
-            });
-        }
-
-        private void ConfigureVirtualFileSystem(ServiceConfigurationContext context)
-        {
-            var hostingEnvironment = context.Services.GetHostingEnvironment();
-
-            if (hostingEnvironment.IsDevelopment())
-            {
-                Configure<AbpVirtualFileSystemOptions>(options =>
+                options.Authority = configuration["AuthServer:Authority"];
+                options.RequireHttpsMetadata = Convert.ToBoolean(configuration["AuthServer:RequireHttpsMetadata"]);
+                options.Audience = "Tulumba";
+                options.BackchannelHttpHandler = new HttpClientHandler
                 {
-                    options.FileSets.ReplaceEmbeddedByPhysical<TulumbaDomainSharedModule>(
-                        Path.Combine(hostingEnvironment.ContentRootPath,
-                            $"..{Path.DirectorySeparatorChar}Tulumba.Domain.Shared"));
-                    options.FileSets.ReplaceEmbeddedByPhysical<TulumbaDomainModule>(
-                        Path.Combine(hostingEnvironment.ContentRootPath,
-                            $"..{Path.DirectorySeparatorChar}Tulumba.Domain"));
-                    options.FileSets.ReplaceEmbeddedByPhysical<TulumbaApplicationContractsModule>(
-                        Path.Combine(hostingEnvironment.ContentRootPath,
-                            $"..{Path.DirectorySeparatorChar}Tulumba.Application.Contracts"));
-                    options.FileSets.ReplaceEmbeddedByPhysical<TulumbaApplicationModule>(
-                        Path.Combine(hostingEnvironment.ContentRootPath,
-                            $"..{Path.DirectorySeparatorChar}Tulumba.Application"));
-                });
+                    ServerCertificateCustomValidationCallback =
+                        HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+                };
+            });
+    }
+
+    private static void ConfigureSwaggerServices(ServiceConfigurationContext context, IConfiguration configuration)
+    {
+        context.Services.AddAbpSwaggerGenWithOAuth(
+            configuration["AuthServer:Authority"],
+            new Dictionary<string, string>
+            {
+                {"Tulumba", "Tulumba API"}
+            },
+            options =>
+            {
+                options.SwaggerDoc("v1", new OpenApiInfo {Title = "Tulumba API", Version = "v1"});
+                options.DocInclusionPredicate((docName, description) => true);
+                options.CustomSchemaIds(type => type.FullName);
+            });
+    }
+
+    private void ConfigureLocalization()
+    {
+        Configure<AbpLocalizationOptions>(options =>
+        {
+            options.Languages.Add(new LanguageInfo("bs", "bs", "Bosanski"));
+            options.Languages.Add(new LanguageInfo("en", "en", "English"));
+        });
+    }
+
+    private void ConfigureCors(ServiceConfigurationContext context, IConfiguration configuration)
+    {
+        context.Services.AddCors(options =>
+        {
+            options.AddDefaultPolicy(builder =>
+            {
+                builder
+                    .WithOrigins(
+                        configuration["App:CorsOrigins"]
+                            .Split(",", StringSplitOptions.RemoveEmptyEntries)
+                            .Select(o => o.RemovePostFix("/"))
+                            .ToArray()
+                    )
+                    .WithAbpExposedHeaders()
+                    .SetIsOriginAllowedToAllowWildcardSubdomains()
+                    .AllowAnyHeader()
+                    .AllowAnyMethod()
+                    .AllowCredentials();
+            });
+        });
+    }
+
+    public override void OnApplicationInitialization(ApplicationInitializationContext context)
+    {
+        var app = context.GetApplicationBuilder();
+        var env = context.GetEnvironment();
+
+        if (env.IsDevelopment())
+        {
+            app.UseDeveloperExceptionPage();
+        }
+
+
+        app.UseAbpRequestLocalization();
+
+        if (!env.IsDevelopment())
+        {
+            app.UseErrorPage();
+        }
+
+        app.UseCorrelationId();
+        app.UseStaticFiles();
+        app.UseRouting();
+        app.UseCookiePolicy();
+        app.UseCors();
+
+        app.UseForwardedHeaders(new ForwardedHeadersOptions
+        {
+            ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+        });
+
+        app.Use(async (httpContext, next) =>
+        {
+            httpContext.SetIdentityServerOrigin(env.BuildConfiguration()["AuthServer:Authority"]);
+            // If registration is disabled in the ENV then this middleware will reject the request by returning a 404 error
+            if (Convert.ToBoolean(env.BuildConfiguration()["AuthServer:DisableRegistration"]) &&
+                httpContext.Request.Path.Value.Equals("/Account/Register"))
+            {
+                httpContext.Response.StatusCode = (int) HttpStatusCode.NotFound;
             }
-        }
-
-        private void ConfigureConventionalControllers()
-        {
-            Configure<AbpAspNetCoreMvcOptions>(options =>
+            else
             {
-                options.ConventionalControllers.Create(typeof(TulumbaApplicationModule).Assembly);
-            });
-        }
-
-        private void ConfigureAuthentication(ServiceConfigurationContext context, IConfiguration configuration)
-        {
-            context.Services.AddSameSiteCookiePolicy();
-            context.Services.AddAuthentication()
-                .AddJwtBearer(options =>
-                {
-                    options.Authority = configuration["AuthServer:Authority"];
-                    options.RequireHttpsMetadata = Convert.ToBoolean(configuration["AuthServer:RequireHttpsMetadata"]);
-                    options.Audience = "Tulumba";
-                    options.BackchannelHttpHandler = new HttpClientHandler
-                    {
-                        ServerCertificateCustomValidationCallback =
-                            HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
-                    };
-                });
-        }
-
-        private static void ConfigureSwaggerServices(ServiceConfigurationContext context, IConfiguration configuration)
-        {
-            context.Services.AddAbpSwaggerGenWithOAuth(
-                configuration["AuthServer:Authority"],
-                new Dictionary<string, string>
-                {
-                    { "Tulumba", "Tulumba API" }
-                },
-                options =>
-                {
-                    options.SwaggerDoc("v1", new OpenApiInfo { Title = "Tulumba API", Version = "v1" });
-                    options.DocInclusionPredicate((docName, description) => true);
-                    options.CustomSchemaIds(type => type.FullName);
-                });
-        }
-
-        private void ConfigureLocalization()
-        {
-            Configure<AbpLocalizationOptions>(options =>
-            {
-                options.Languages.Add(new LanguageInfo("bs", "bs", "Bosanski"));
-                options.Languages.Add(new LanguageInfo("en", "en", "English"));
-            });
-        }
-
-        private void ConfigureCors(ServiceConfigurationContext context, IConfiguration configuration)
-        {
-            context.Services.AddCors(options =>
-            {
-                options.AddDefaultPolicy(builder =>
-                {
-                    builder
-                        .WithOrigins(
-                            configuration["App:CorsOrigins"]
-                                .Split(",", StringSplitOptions.RemoveEmptyEntries)
-                                .Select(o => o.RemovePostFix("/"))
-                                .ToArray()
-                        )
-                        .WithAbpExposedHeaders()
-                        .SetIsOriginAllowedToAllowWildcardSubdomains()
-                        .AllowAnyHeader()
-                        .AllowAnyMethod()
-                        .AllowCredentials();
-                });
-            });
-        }
-
-        public override void OnApplicationInitialization(ApplicationInitializationContext context)
-        {
-            var app = context.GetApplicationBuilder();
-            var env = context.GetEnvironment();
-            
-            if (env.IsDevelopment())
-            {
-                app.UseDeveloperExceptionPage();
-            }
-
-
-            app.UseAbpRequestLocalization();
-
-            if (!env.IsDevelopment())
-            {
-                app.UseErrorPage();
-            }
-
-            app.UseCorrelationId();
-            app.UseStaticFiles();
-            app.UseRouting();
-            app.UseCookiePolicy();
-            app.UseCors();
-            
-            app.UseForwardedHeaders(new ForwardedHeadersOptions
-            {
-                ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
-            });
-            
-            app.Use(async (httpContext, next) =>
-            {
-                httpContext.SetIdentityServerOrigin(env.BuildConfiguration()["AuthServer:Authority"]);
                 await next.Invoke();
-            });
-            
-            app.UseAuthentication();
-            app.UseJwtTokenMiddleware();
-
-            if (MultiTenancyConsts.IsEnabled)
-            {
-                app.UseMultiTenancy();
             }
+        });
 
-            app.UseUnitOfWork();
-            app.UseIdentityServer();
-            app.UseAuthorization();
 
-            app.UseSwagger();
-            app.UseAbpSwaggerUI(c =>
-            {
-                c.SwaggerEndpoint("/swagger/v1/swagger.json", "Tulumba API");
+        app.UseAuthentication();
+        app.UseJwtTokenMiddleware();
 
-                var configuration = context.ServiceProvider.GetRequiredService<IConfiguration>();
-                c.OAuthClientId(configuration["AuthServer:SwaggerClientId"]);
-                c.OAuthClientSecret(configuration["AuthServer:SwaggerClientSecret"]);
-                c.OAuthScopes("Tulumba");
-            });
-
-            app.UseAuditing();
-            app.UseAbpSerilogEnrichers();
-            app.UseConfiguredEndpoints();
+        if (MultiTenancyConsts.IsEnabled)
+        {
+            app.UseMultiTenancy();
         }
+
+        app.UseUnitOfWork();
+        app.UseIdentityServer();
+        app.UseAuthorization();
+
+        app.UseSwagger();
+        app.UseAbpSwaggerUI(c =>
+        {
+            c.SwaggerEndpoint("/swagger/v1/swagger.json", "Tulumba API");
+
+            var configuration = context.ServiceProvider.GetRequiredService<IConfiguration>();
+            c.OAuthClientId(configuration["AuthServer:SwaggerClientId"]);
+            c.OAuthClientSecret(configuration["AuthServer:SwaggerClientSecret"]);
+            c.OAuthScopes("Tulumba");
+        });
+
+        app.UseAuditing();
+        app.UseAbpSerilogEnrichers();
+        app.UseConfiguredEndpoints();
     }
 }

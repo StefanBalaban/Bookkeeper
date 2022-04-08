@@ -24,7 +24,7 @@ To start with docker-compose cd into the root directory of the application and:
 The application will be available on localhost:8082 and the api will be on localhost:8083.
 
 ### With dotnet and npm/yarn
-Requires .NET 5 SDK and runtime, and npm with node version 14.18.0.
+Requires .NET 6 SDK and runtime, and npm with node version 14.18.0.
 #### API
 Will also require a PostgreSQL database whose connection string will have to be added to the DbMigrator and HttpApiHost appsettings.json files.
 After adding the connection string to the DbMigrator project, run `dotnet run` inside of the root directory of the DbMigrator project to migrate and seed the database.

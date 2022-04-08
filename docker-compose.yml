@@ -7,21 +7,18 @@ services:
       POSTGRES_PASSWORD: example
     ports:
       - 127.0.0.1:5432:5432
-    networks: 
-      - bookkeepernet
+    volumes:
+      - ~/Tulumba/postgres:/var/lib/postgresql/data
   db-migrator:
     build:
       context: ./aspnet-core
       dockerfile: ./Dockerfile.DbMigrator
     environment: 
       - ConnectionStrings:Default=Server=db;Port=5432;Database=tulumba;User ID=postgres;Password=example;
-      - IdentityServer:Clients:Tulumba_App:RootUrl=http://localhost:8082
-      - IdentityServer:Clients:Tulumba_Swagger:RootUrl=http://localhost:8083
-      
-    networks:
-      - bookkeepernet
-    links:
-      - db
+      #- IdentityServer:Clients:Tulumba_App:RootUrl=http://localhost:8082
+      - IdentityServer:Clients:Tulumba_App:RootUrl=http://192.168.1.12
+      #- IdentityServer:Clients:Tulumba_Swagger:RootUrl=http://localhost:8083
+      - IdentityServer:Clients:Tulumba_Swagger:RootUrl=http://192.168.1.12:8083
     depends_on:
       - db
   api:
@@ -30,49 +27,40 @@ services:
       dockerfile: ./Dockerfile.Api
     environment: 
       - ConnectionStrings:Default=Server=db;Port=5432;Database=tulumba;User ID=postgres;Password=example;
-      - AuthServer:Authority=http://localhost:8083
-      - App:SelfUrl=http://localhost:8083
-      - App:ClientUrl=http://localhost:8082
-      - App:CorsOrigins=http://localhost:8082,http://localhost:8083
-      - App:RedirectAllowedUrls=http://localhost:8082,http://localhost:8083
-#    ports:
-#      - 127.0.0.1:44389:8083
-    networks:
-      - bookkeepernet
-    links:
-      - db
+      #- AuthServer:Authority=http://localhost:8083
+      - AuthServer:Authority=http://192.168.1.12:8083
+      - AuthServer:DisableRegistration=true
+      #- App:SelfUrl=http://localhost:8083
+      - App:SelfUrl=http://192.168.1.12:8083
+      #- App:ClientUrl=http://localhost:8082
+      - App:ClientUrl=http://192.168.1.12
+      #- App:CorsOrigins=http://localhost:8082,http://localhost:8083
+      - App:CorsOrigins=http://192.168.1.12
+      #- App:RedirectAllowedUrls=http://localhost:8082,http://localhost:8083
+      - App:RedirectAllowedUrls=http://192.168.1.12
     depends_on:
       - db-migrator
   app:
     build:
       context: ./angular
       dockerfile: ./Dockerfile
-#    ports:
-#      - 127.0.0.1:8081:80
-    networks:
-      - bookkeepernet
-    links:
-      - api
     depends_on:
       - api
     environment:
-      - ANGULAR_CLIENT_URL_BASE=http://localhost:8082
-      - API_HOST_URL_BASE=http://localhost:8083
+      #- ANGULAR_CLIENT_URL_BASE=http://localhost:8082
+      - ANGULAR_CLIENT_URL_BASE=http://192.168.1.12
+      #- API_HOST_URL_BASE=http://localhost:8083
+      - API_HOST_URL_BASE=http://192.168.1.12:8083
   reverse_proxy:
       build:
         context: .
         dockerfile: ./Dockerfile
       ports:
-        - 8082:8082
+        - 80:8082
         - 8083:8083   
       links:
         - api
         - app
-      networks:
-        - bookkeepernet
       environment:
         - API=api
         - APP=app
-networks:
-  bookkeepernet:
-    driver: bridge
