@@ -5,7 +5,6 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using IdentityServer4.Configuration;
-using IdentityServer4.Extensions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Hosting;
@@ -14,7 +13,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
-using Serilog;
 using Tulumba.EntityFrameworkCore;
 using Tulumba.MultiTenancy;
 using Volo.Abp;
@@ -219,11 +217,9 @@ public class TulumbaHttpApiHostModule : AbpModule
         {
             ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
         });
-
+        // If registration is disabled in the ENV then this middleware will reject the request by returning a 404 error
         app.Use(async (httpContext, next) =>
         {
-            httpContext.SetIdentityServerOrigin(env.BuildConfiguration()["AuthServer:Authority"]);
-            // If registration is disabled in the ENV then this middleware will reject the request by returning a 404 error
             if (Convert.ToBoolean(env.BuildConfiguration()["AuthServer:DisableRegistration"]) &&
                 httpContext.Request.Path.Value.Equals("/Account/Register"))
             {
