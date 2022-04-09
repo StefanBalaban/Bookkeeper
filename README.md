@@ -1,5 +1,6 @@
 # Bookkeeper
-Expense and profit tracker built for the needs of a bakery with multiple storefronts.  Built using the ABP.io framework.
+Expense and profit tracker built for the needs of a bakery with multiple storefronts. The application allows net income on daily and monthly basis based on reported expenses and earnings. 
+Built using the ABP.io framework.
 
 With this application you can do CRUD operations with:
 - expense types
