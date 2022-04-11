@@ -20,6 +20,7 @@ FROM nginx as final
 ## Remove default nginx website
 RUN rm -rf /usr/share/nginx/html/*
 
+COPY nginx.conf /etc/nginx/nginx.conf
 COPY --from=build /app/dist/Tulumba /usr/share/nginx/html
 COPY --from=build /app/replace_env-variables.sh /
 

@@ -11,7 +11,7 @@ services:
       dockerfile: ./Dockerfile.DbMigrator
     depends_on:
       - db
-    environment: 
+    environment:
       - ConnectionStrings:Default=Server=db;Port=5432;Database=tulumba;User ID=postgres;Password=example;
       - IdentityServer:Clients:Tulumba_App:RootUrl=http://localhost:8082
       - IdentityServer:Clients:Tulumba_Swagger:RootUrl=http://localhost:8083
@@ -21,7 +21,7 @@ services:
       dockerfile: ./Dockerfile.Api
     depends_on:
       - db-migrator
-    environment: 
+    environment:
       - ConnectionStrings:Default=Server=db;Port=5432;Database=tulumba;User ID=postgres;Password=example;
       - AuthServer:Authority=http://localhost:8083
       - AuthServer:DisableRegistration=true
@@ -39,15 +39,15 @@ services:
       - ANGULAR_CLIENT_URL_BASE=http://localhost:8082
       - API_HOST_URL_BASE=http://localhost:8083
   reverse_proxy:
-      build:  
-        context: .
-        dockerfile: ./Dockerfile
-      ports:
-        - 8082:8082
-        - 8083:8083
-      links:
-        - api
-        - app
-      environment:
-        - API=api
-        - APP=app
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    ports:
+      - 8082:8082
+      - 8083:8083
+    links:
+      - api
+      - app
+    environment:
+      - API=api
+      - APP=app

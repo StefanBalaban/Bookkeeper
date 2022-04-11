@@ -7,11 +7,11 @@
       <div class="text-right col col-md-6">
         <div class="text-lg-right pt-2">
           <button
-            *abpPermission="'Tulumba.DailyCashFlows.Create'"
-            id="create"
-            class="btn btn-primary"
-            type="button"
             (click)="createDailyCashFlow()"
+            *abpPermission="'Tulumba.DailyCashFlows.Create'"
+            class="btn btn-primary"
+            id="create"
+            type="button"
           >
             <i class="fa fa-plus mr-1"></i>
             <span>{{ '::NewEntry' | abpLocalization }}</span>
@@ -22,21 +22,21 @@
     <div class="sum">
       <h5>
         {{ '::DailyCashFlow:Sum' | abpLocalization }}:
-        {{ sum.toLocaleString('en-US', { minimumFractionDigits: 2 }) }} KM
+        {{ sum.toLocaleString('en-US', {minimumFractionDigits: 2}) }} KM
       </h5>
     </div>
     <div class="row">
-      <mat-expansion-panel hideToggle class="filter-expansion-panel">
+      <mat-expansion-panel class="filter-expansion-panel" hideToggle>
         <mat-expansion-panel-header>
           <mat-panel-title> {{ '::Filter' | abpLocalization }} </mat-panel-title>
         </mat-expansion-panel-header>
         <div>
-          <form [formGroup]="filterForm" (change)="filter()">
+          <form (change)="filter()" [formGroup]="filterForm">
             <div class="form-group filter-form-input">
               <label for="shop-id">{{ '::DailyCashFlows:ShopId' | abpLocalization }}</label
               ><span> * </span>
-              <select class="form-control" id="shop-id" formControlName="shopId">
-                <option [ngValue]="type.id" *ngFor="let type of shops">{{ type.name }}</option>
+              <select class="form-control" formControlName="shopId" id="shop-id">
+                <option *ngFor="let type of shops" [ngValue]="type.id">{{ type.name }}</option>
               </select>
             </div>
             <div class="form-group filter-form-input">
@@ -44,12 +44,12 @@
               ><span> * </span>
               <input
                 #datepicker2="ngbDatepicker"
-                class="form-control"
-                name="datepicker"
-                formControlName="dateLTE"
-                ngbDatepicker
                 (click)="datepicker2.toggle()"
                 (dateSelect)="filter()"
+                class="form-control"
+                formControlName="dateLTE"
+                name="datepicker"
+                ngbDatepicker
               />
             </div>
             <div class="form-group filter-form-input">
@@ -57,22 +57,22 @@
               ><span> * </span>
               <input
                 #datepicker1="ngbDatepicker"
-                class="form-control"
-                name="datepicker"
-                formControlName="dateGTE"
-                ngbDatepicker
                 (click)="datepicker1.toggle()"
                 (dateSelect)="filter()"
+                class="form-control"
+                formControlName="dateGTE"
+                name="datepicker"
+                ngbDatepicker
               />
             </div>
           </form>
         </div>
         <div class="text-right col col-md-6">
           <button
-            id="refresh-filter"
-            class="btn btn-primary"
-            type="button"
             (click)="refreshFilter()"
+            class="btn btn-primary"
+            id="refresh-filter"
+            type="button"
           >
             <i class="fa fa-refresh mr-1"></i>
             <span>{{ '::Filter:Refresh' | abpLocalization }}</span>
@@ -83,9 +83,9 @@
   </div>
   <div class="card-body">
     <ngx-datatable
-      [rows]="dailyCashFlow.items"
       [count]="dailyCashFlow.totalCount"
       [list]="list"
+      [rows]="dailyCashFlow.items"
       default
     >
       <ngx-datatable-column [name]="'::DailyCashFlows:ShopId' | abpLocalization" prop="shopId">
@@ -111,37 +111,37 @@
         prop="dailyCashFlowSum"
       >
         <ng-template let-row="row" ngx-datatable-cell-template>
-          {{ getDailyCashFlowSum(row.id).toLocaleString('en-US', { minimumFractionDigits: 2 }) }}
+          {{ getDailyCashFlowSum(row.id).toLocaleString('en-US', {minimumFractionDigits: 2}) }}
         </ng-template>
       </ngx-datatable-column>
 
       <ngx-datatable-column
-        [name]="'::Actions' | abpLocalization"
         [maxWidth]="150"
+        [name]="'::Actions' | abpLocalization"
         [sortable]="false"
       >
         <ng-template let-row="row" ngx-datatable-cell-template>
-          <div ngbDropdown container="body" class="d-inline-block">
+          <div class="d-inline-block" container="body" ngbDropdown>
             <button
+              aria-haspopup="true"
               class="btn btn-primary btn-sm dropdown-toggle"
               data-toggle="dropdown"
-              aria-haspopup="true"
               ngbDropdownToggle
             >
               <i class="fa fa-cog mr-1"></i>{{ '::Actions' | abpLocalization }}
             </button>
             <div ngbDropdownMenu>
               <button
+                (click)="editDailyCashFlow(row.id)"
                 *abpPermission="'Tulumba.DailyCashFlows.Edit'"
                 ngbDropdownItem
-                (click)="editDailyCashFlow(row.id)"
               >
                 {{ '::Edit' | abpLocalization }}
               </button>
               <button
+                (click)="delete(row.id)"
                 *abpPermission="'Tulumba.DailyCashFlows.Delete'"
                 ngbDropdownItem
-                (click)="delete(row.id)"
               >
                 {{ '::Delete' | abpLocalization }}
               </button>
@@ -160,17 +160,17 @@
   </ng-template>
 
   <ng-template #abpBody>
-    <form [formGroup]="form" (ngSubmit)="save()">
+    <form (ngSubmit)="save()" [formGroup]="form">
       <div class="form-group">
         <label>{{ '::DailyCashFlows:Date' | abpLocalization }}</label
         ><span> * </span>
         <input
           #datepicker="ngbDatepicker"
-          class="form-control"
-          name="datepicker"
-          formControlName="date"
-          ngbDatepicker
           (click)="datepicker.toggle()"
+          class="form-control"
+          formControlName="date"
+          name="datepicker"
+          ngbDatepicker
           ngbDatepicker
         />
       </div>
@@ -178,24 +178,24 @@
         <label for="shop-id">{{ '::DailyCashFlows:ShopId' | abpLocalization }}</label
         ><span> * </span>
         <select
-          class="form-control"
-          id="shop-id"
-          formControlName="shopId"
           (change)="selectShop($event.target.value)"
+          class="form-control"
+          formControlName="shopId"
+          id="shop-id"
         >
-          <option [ngValue]="type.id" *ngFor="let type of shops">{{ type.name }}</option>
+          <option *ngFor="let type of shops" [ngValue]="type.id">{{ type.name }}</option>
         </select>
       </div>
     </form>
   </ng-template>
 
   <ng-template #abpFooter>
-    <button type="button" class="btn btn-secondary" abpClose>
+    <button abpClose class="btn btn-secondary" type="button">
       {{ '::Close' | abpLocalization }}
     </button>
 
     <!--added save button-->
-    <button class="btn btn-primary" (click)="save()" [disabled]="form.invalid">
+    <button (click)="save()" [disabled]="form.invalid" class="btn btn-primary">
       <i class="fa fa-check mr-1"></i>
       {{ '::Save' | abpLocalization }}
     </button>
