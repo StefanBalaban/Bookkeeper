@@ -88,7 +88,7 @@
       <ngx-datatable-column [name]="'::MonthlyCashFlows:ShopId' | abpLocalization" prop="shopId">
         <ng-template let-row="row" ngx-datatable-cell-template>
           {{ getShopName(row.shopId) }}
-        </ng-template> 
+        </ng-template>
       </ngx-datatable-column> getMonthlyCashFlowDate
       <ngx-datatable-column
         [name]="'::MonthlyCashFlows:Date' | abpLocalization"
@@ -96,18 +96,19 @@
       >
       <ng-template let-row="row" ngx-datatable-cell-template>
         {{ getMonthlyCashFlowDate(row.id) }}
-      </ng-template> 
+      </ng-template>
     </ngx-datatable-column>
 
       <ngx-datatable-column
       [name]="'::MonthlyCashFlows:Sum' | abpLocalization"
+      [sortable]="false"
       prop="monthlyCashFlowSum"
     >
       <ng-template let-row="row" ngx-datatable-cell-template>
         {{ getMonthlyCashFlowSum(row.id).toLocaleString('en-US', {minimumFractionDigits: 2}) }}
       </ng-template>
     </ngx-datatable-column>
-      
+
       <ngx-datatable-column
         [name]="'::Actions' | abpLocalization"
         [maxWidth]="150"
@@ -153,7 +154,7 @@
   </ng-template>
 
   <ng-template #abpBody>
-    <form [formGroup]="form" (ngSubmit)="save()">
+    <form [formGroup]="form" (ngSubmit)="save()" class="input-form">
       <div class="form-group">
           <label>{{ '::MonthlyCashFlows:Date' | abpLocalization }}</label><span> * </span>
           <input

@@ -93,7 +93,7 @@
   </ng-template>
 
   <ng-template #abpBody>
-    <form [formGroup]="form" (ngSubmit)="save()">
+    <form [formGroup]="form" (ngSubmit)="save()" class="input-form">
       <div class="form-group">
         <label for="expense-type-name">{{ '::ExpenseTypes:Name' | abpLocalization }}</label><span> * </span>
         <input type="text" id="expense-type-name" class="form-control" formControlName="name"  autofocus />

@@ -62,7 +62,7 @@
   </ng-template>
 
   <ng-template #abpBody>
-    <form [formGroup]="form" (ngSubmit)="save()">
+    <form [formGroup]="form" (ngSubmit)="save()" class="input-form">
       <div class="form-group">
         <label for="shop-name">{{ '::Shops:Name' | abpLocalization }}</label><span> * </span>
         <input type="text" id="shop-name" class="form-control" formControlName="name" autofocus />

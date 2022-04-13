@@ -86,7 +86,7 @@
   </ng-template>
 
   <ng-template #abpBody>
-    <form [formGroup]="form" (ngSubmit)="save()">
+    <form [formGroup]="form" (ngSubmit)="save()" class="input-form">
       <div class="form-group">
         <label for="employee-name">{{ '::Employees:Name' | abpLocalization }}</label
         ><span> * </span>

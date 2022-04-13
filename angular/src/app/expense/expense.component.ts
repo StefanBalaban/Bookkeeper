@@ -1,41 +1,39 @@
-import { ListService, PagedResultDto } from '@abp/ng.core';
-import { Confirmation, ConfirmationService } from '@abp/ng.theme.shared';
-import { Component, Inject, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import {
-  EmployeeService,
-  ExpenseService,
-  ExpenseTypeService,
-  ShopService,
-} from '@proxy/application/app-services';
-import { ExpenseDto } from '@proxy/application/contracts/dtos/expense';
-import { NgbDateNativeAdapter, NgbDateAdapter } from '@ng-bootstrap/ng-bootstrap';
-import { ShopDto } from '@proxy/application/contracts/dtos/shop';
-import { ExpenseTypeDto } from '@proxy/application/contracts/dtos/expense-type';
-import { ExpenseCategory, expenseCategoryOptions, ExpensePeriod } from '@proxy/entities/expense-type';
-import { EmployeeDto } from '@proxy/application/contracts/dtos/employee';
-import { SalaryType } from '@proxy/entities/employee';
-import { concatMap, switchMap } from 'rxjs/operators';
+import {ListService, PagedResultDto} from '@abp/ng.core';
+import {Confirmation, ConfirmationService} from '@abp/ng.theme.shared';
+import {Component, Inject, OnInit} from '@angular/core';
+import {FormBuilder, FormGroup, Validators} from '@angular/forms';
+import {EmployeeService, ExpenseService, ExpenseTypeService, ShopService,} from '@proxy/application/app-services';
+import {ExpenseDto} from '@proxy/application/contracts/dtos/expense';
+import {NgbDateAdapter, NgbDateNativeAdapter} from '@ng-bootstrap/ng-bootstrap';
+import {ShopDto} from '@proxy/application/contracts/dtos/shop';
+import {ExpenseTypeDto} from '@proxy/application/contracts/dtos/expense-type';
+import {ExpenseCategory, expenseCategoryOptions, ExpensePeriod} from '@proxy/entities/expense-type';
+import {EmployeeDto} from '@proxy/application/contracts/dtos/employee';
+import {SalaryType} from '@proxy/entities/employee';
+import {switchMap} from 'rxjs/operators';
+
 @Component({
   selector: 'app-expense',
   templateUrl: './expense.component.html',
   styleUrls: ['./expense.component.scss'],
   providers: [
-    { provide: 'EXPENSE_LIST', useClass: ListService },
-    { provide: 'EXPENSE_TYPE_LIST', useClass: ListService },
-    { provide: 'EMPLOYEE_LIST', useClass: ListService },
-    { provide: 'SHOP_LIST', useClass: ListService },
-    { provide: NgbDateAdapter, useClass: NgbDateNativeAdapter },
+    {provide: 'EXPENSE_LIST', useClass: ListService},
+    {provide: 'EXPENSE_TYPE_LIST', useClass: ListService},
+    {provide: 'EMPLOYEE_LIST', useClass: ListService},
+    {provide: 'SHOP_LIST', useClass: ListService},
+    {provide: NgbDateAdapter, useClass: NgbDateNativeAdapter},
   ],
 })
 export class ExpenseComponent implements OnInit {
-  expense = { items: [], totalCount: 0 } as PagedResultDto<ExpenseDto>;
+  expense = {items: [], totalCount: 0} as PagedResultDto<ExpenseDto>;
   form: FormGroup;
   filterForm: FormGroup;
   isModalOpen = false;
-  selectedExpense = {} as ExpenseDto;
+  selectedExpense : ExpenseDto;
   shops: ShopDto[] = [];
   expenseTypes: ExpenseTypeDto[] = [];
+  expenseTypesFilter: ExpenseTypeDto[] = [];
+  expenseTypesForm: ExpenseTypeDto[] = [];
   selectedExpenseType: string;
   employees: EmployeeDto[] = [];
   salaryExpenseSelected = false;
@@ -59,18 +57,19 @@ export class ExpenseComponent implements OnInit {
     private shopService: ShopService,
     private expenseTypeService: ExpenseTypeService,
     private employeeService: EmployeeService
-  ) {}
+  ) {
+  }
 
   ngOnInit() {
     this.createFilterForm();
-    const expenseStreamCreator = query => this.expenseService.getList({ ...query, ...this.query });
+    const expenseStreamCreator = query => this.expenseService.getList({...query, ...this.query});
 
     this.list.hookToQuery(expenseStreamCreator).subscribe(response => {
       this.expense = response;
       this.getSum();
     });
 
-    let shopRequest = this.shopService.getList({ maxResultCount: 1, skipCount: 0 }).pipe(
+    let shopRequest = this.shopService.getList({maxResultCount: 1, skipCount: 0}).pipe(
       switchMap(response =>
         this.shopService.getList({
           maxResultCount: response.totalCount !== 0 ? response.totalCount : 1,
@@ -82,7 +81,7 @@ export class ExpenseComponent implements OnInit {
     shopRequest.subscribe(response => (this.shops = response.items));
 
     let expenseTypeRequest = this.expenseTypeService
-      .getList({ maxResultCount: 1, skipCount: 0 })
+      .getList({maxResultCount: 1, skipCount: 0})
       .pipe(
         switchMap(response =>
           this.expenseTypeService.getList({
@@ -92,9 +91,13 @@ export class ExpenseComponent implements OnInit {
         )
       );
 
-    expenseTypeRequest.subscribe(response => (this.expenseTypes = response.items));
+    expenseTypeRequest.subscribe(response => {
+      this.expenseTypes = response.items;
+      this.expenseTypesFilter = response.items;
+      this.expenseTypesForm = response.items;
+    });
 
-    let employeeRequest = this.employeeService.getList({ maxResultCount: 1, skipCount: 0 }).pipe(
+    let employeeRequest = this.employeeService.getList({maxResultCount: 1, skipCount: 0}).pipe(
       switchMap(response =>
         this.employeeService.getList({
           maxResultCount: response.totalCount !== 0 ? response.totalCount : 1,
@@ -105,6 +108,7 @@ export class ExpenseComponent implements OnInit {
 
     employeeRequest.subscribe(response => (this.employees = response.items));
   }
+
   getSum() {
     this.sum = 0;
     this.expenseService
@@ -133,7 +137,7 @@ export class ExpenseComponent implements OnInit {
       ? new Date(this.filterForm.controls['dateGTE'].value).toDateString()
       : '';
     this.query.expenseTypeId = this.filterForm.controls['expenseTypeId'].value || '';
-    this.query.expenseCategory = this.filterForm.controls['expenseCategory'].value >= 0  ? this.filterForm.controls['expenseCategory'].value : '';
+    this.query.expenseCategory = this.filterForm.controls['expenseCategory'].value >= 0 ? this.filterForm.controls['expenseCategory'].value : '';
     this.query.employeeId = this.filterForm.controls['employeeId'].value || '';
     this.list.get();
   }
@@ -158,6 +162,14 @@ export class ExpenseComponent implements OnInit {
       const employee = this.employees.find(x => employeeId.includes(x.id));
       this.salaryAmount = employee.salaryAmount;
     }
+  }
+
+  getSalaryAmountForSelectedEmployee(employeeId: string) : number {
+    if (employeeId) {
+      const employee = this.employees.find(x => employeeId.includes(x.id));
+      return employee.salaryAmount;
+    }
+    return 0;
   }
 
   setInputforExpenseType(selectedExpenseTypeId: string) {
@@ -209,8 +221,8 @@ export class ExpenseComponent implements OnInit {
   }
 
   createExpense() {
-    this.selectedExpense = {} as ExpenseDto;
-    this.buildForm(); // add this line
+    this.selectedExpense = null;
+    this.buildForm();
     this.isModalOpen = true;
   }
 
@@ -222,7 +234,6 @@ export class ExpenseComponent implements OnInit {
     });
   }
 
-  // Add a delete method
   delete(id: string) {
     this.confirmation.warn('::AreYouSureToDelete', '::AreYouSure').subscribe(status => {
       if (status === Confirmation.Status.confirm) {
@@ -234,24 +245,82 @@ export class ExpenseComponent implements OnInit {
   buildForm() {
     this.form = this.fb.group({
       date: [
-        this.selectedExpense.date ? new Date(this.selectedExpense.date) : null,
+        this.selectedExpense?.date ? new Date(this.selectedExpense?.date) : null,
         Validators.required,
       ],
-      expenseTypeId: [this.selectedExpense.expenseTypeId || '', Validators.required],
-      shopId: [this.selectedExpense.shopId || '', Validators.required],
-      employeeId: [this.selectedExpense.employeeId || ''],
-      amount: [this.selectedExpense.amount || 0, Validators.required],
+      expenseCategory:[this.expenseTypes.find(x => x.id === this.selectedExpense?.expenseTypeId)?.expenseCategory  || ''],
+      expenseTypeId: [this.selectedExpense?.expenseTypeId || '', Validators.required],
+      shopId: [this.selectedExpense?.shopId || '', Validators.required],
+      employeeId: [this.selectedExpense?.employeeId || ''],
+      amount: [this.selectedExpense?.amount || 0, Validators.required],
     });
 
-    // Set the input fields on the form for the expense type
-    if (this.selectedExpense.expenseTypeId) {
-      this.setInputforExpenseType(this.selectedExpense.expenseTypeId);
-    } else {
-      this.setInputforExpenseType(null);
+    if (this.selectedExpense) {
+      if (this.selectedExpense.employeeId) {
+        this.setEmployeesForSelect();
+        this.setFormForEmployeeSelected(this.selectedExpense.employeeId);
+      }
+      else {
+        this.setFormForEmployeeNotSelected(this.selectedExpense.amount);
+      }
     }
+    else {
+      this.setFormForEmployeeNotSelected(0);
+    }
+  }
 
-    // Set the salary amount if employee is set
-    this.setAmountForSelectedEmployee(this.selectedExpense.employeeId);
+  setFormForEmployeeNotSelected(amount :number) {
+    this.salaryExpenseSelected = false;
+    this.form.controls['amount'].setValue(amount);
+    this.form.controls['employeeId'].setValue(null);
+    this.form.controls['employeeId'].setValidators(null);
+  }
+
+  setEmployeesForSelect() {
+    const expenseType = this.expenseTypes.find(x => x.id === this.form.controls['expenseTypeId'].value);
+    const salaryType = expenseType?.expensePeriod == ExpensePeriod.Mjesecni
+    ? SalaryType.Mjesecno
+    : SalaryType.Dnevnica
+
+    this.employeeForSelect = this.employees
+      .filter(x => !this.form.controls['shopId'].value || x.shopId === this.form.controls['shopId'].value)
+      .filter(x => !expenseType || x.salaryType === salaryType)
+  }
+  setFormForEmployeeSelected(employeeId?: string) {
+    this.salaryExpenseSelected = true;
+    this.form.controls['employeeId'].setValidators(Validators.required);
+
+    if (employeeId) {
+      this.form.controls['amount'].setValue(this.getSalaryAmountForSelectedEmployee(employeeId));
+      this.form.controls['employeeId'].setValue(employeeId);
+    }
+    else {
+      this.form.controls['amount'].setValue(0);
+      this.form.controls['employeeId'].setValue(null);
+    }
+  }
+
+  setFormForChangedShop() {
+    if (this.salaryExpenseSelected) {
+      this.setEmployeesForSelect();
+      this.setFormForEmployeeSelected(this.employeeForSelect[0]?.id)
+    }
+  }
+
+  setFormForChangedExpenseType() {
+    const expenseType = this.expenseTypes.find(x => x.id === this.form.controls['expenseTypeId'].value);
+    if (expenseType?.expenseCategory == ExpenseCategory.Plata) {
+      this.setEmployeesForSelect();
+      this.setFormForEmployeeSelected(this.employeeForSelect[0]?.id);
+    }
+    else {
+      if (this.form.controls['employeeId'].value) {
+        this.setFormForEmployeeNotSelected(0);
+      }
+      else {
+        this.setFormForEmployeeNotSelected(this.form.controls['amount'].value);
+      }
+    }
   }
 
   save() {
@@ -259,14 +328,10 @@ export class ExpenseComponent implements OnInit {
       return;
     }
 
-    if (this.salaryExpenseSelected) {
-      this.form.controls['amount'].enable();
-      this.form.controls['amount'].setValue(this.salaryAmount);
-    }
-
-    const request = this.selectedExpense.id
+    const request = this.selectedExpense?.id
       ? this.expenseService.update(this.selectedExpense.id, this.form.value)
       : this.expenseService.create(this.form.value);
+
 
     request.subscribe(() => {
       this.isModalOpen = false;
@@ -274,6 +339,7 @@ export class ExpenseComponent implements OnInit {
       this.list.get();
     });
   }
+
   createFilterForm() {
     this.filterForm = this.fb.group({
       dateGTE: [],
@@ -283,5 +349,15 @@ export class ExpenseComponent implements OnInit {
       employeeId: [''],
       expenseCategory: ['']
     });
+  }
+
+  setExpenseTypeForCategoryInFilter(value: string) {
+    this.expenseTypesFilter = this.expenseTypes.filter(x => x.expenseCategory === +value.split(':')[1]);
+  }
+
+  setExpenseTypeForCategoryInForm() {
+    this.expenseTypesForm = this.expenseTypes.filter(x => x.expenseCategory === this.form.controls['expenseCategory'].value)
+    this.form.controls['expenseTypeId'].setValue(this.expenseTypesForm[0]?.id);
+    this.setFormForChangedExpenseType();
   }
 }
