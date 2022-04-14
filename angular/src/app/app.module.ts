@@ -15,6 +15,7 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { APP_ROUTE_PROVIDER } from './route.provider';
 import { storeLocaleData } from '@abp/ng.core/locale';
+import { LogoComponent } from './logo/logo.component';
 import(
 /* webpackChunkName: "_bs-js"*/
 /* webpackMode: "eager" */
@@ -43,7 +44,7 @@ import(
     NgxsModule.forRoot(),
     ThemeBasicModule.forRoot(),
   ],
-  declarations: [AppComponent],
+  declarations: [AppComponent, LogoComponent],
   providers: [APP_ROUTE_PROVIDER],
   bootstrap: [AppComponent],
 })

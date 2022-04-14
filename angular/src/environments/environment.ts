@@ -1,6 +1,6 @@
 import { Environment } from '@abp/ng.core';
 
-const baseUrl = 'http://localhost:4200';
+const baseUrl = 'http://tulumba2.ba';
 
 export const environment = {
   production: false,
@@ -10,7 +10,7 @@ export const environment = {
     logoUrl: '',
   },
   oAuthConfig: {
-    issuer: 'https://localhost:44389',
+    issuer: 'http://tulumba2.ba:8083',
     redirectUri: baseUrl,
     clientId: 'Tulumba_App',
     responseType: 'code',
@@ -19,7 +19,7 @@ export const environment = {
   },
   apis: {
     default: {
-      url: 'https://localhost:44389',
+      url: 'http://tulumba2.ba:8083',
       rootNamespace: 'Tulumba',
     },
   },

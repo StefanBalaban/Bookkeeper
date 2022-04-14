@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "isRoot": true,
+  "tools": {
+    "dotnet-ef": {
+      "version": "6.0.4",
+      "commands": [
+        "dotnet-ef"
+      ]
+    },
+    "volo.abp.cli": {
+      "version": "5.2.0",
+      "commands": [
+        "abp"
+      ]
+    }
+  }
+}

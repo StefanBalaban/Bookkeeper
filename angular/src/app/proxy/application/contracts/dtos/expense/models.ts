@@ -1,5 +1,5 @@
 import type { AuditedEntityDto, PagedAndSortedResultRequestDto } from '@abp/ng.core';
-import { ExpenseCategory } from '../../../../entities/expense-type/expense-category.enum';
+import type { ExpenseCategory } from '../../../../entities/expense-type/expense-category.enum';
 
 export interface CreateUpdateExpenseDto {
   expenseTypeId: string;
@@ -25,6 +25,6 @@ export interface GetExpenseListDto extends PagedAndSortedResultRequestDto {
   dateLTE?: string;
   shopId?: string;
   employeeId?: string;
-  expenseCategory?: ExpenseCategory;
   amount?: number;
+  expenseCategory?: ExpenseCategory;
 }

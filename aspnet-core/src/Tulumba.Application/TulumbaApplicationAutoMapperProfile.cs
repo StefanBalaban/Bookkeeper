@@ -5,6 +5,7 @@ using Tulumba.Application.Contracts.Dtos.Employee;
 using Tulumba.Application.Contracts.Dtos.Expense;
 using Tulumba.Application.Contracts.Dtos.ExpenseType;
 using Tulumba.Application.Contracts.Dtos.MonthlyCashFlow;
+using Tulumba.Application.Contracts.Dtos.RecurringExpense;
 using Tulumba.Application.Contracts.Dtos.Shop;
 using Tulumba.Entities.DailyCashFlow;
 using Tulumba.Entities.DailyEarning;
@@ -12,6 +13,7 @@ using Tulumba.Entities.Employee;
 using Tulumba.Entities.Expense;
 using Tulumba.Entities.ExpenseType;
 using Tulumba.Entities.MonthlyCashFlow;
+using Tulumba.Entities.RecurringExpense;
 using Tulumba.Entities.Shop;
 
 namespace Tulumba
@@ -34,6 +36,8 @@ namespace Tulumba
             CreateMap<CreateUpdateExpenseDto, Expense>();
             CreateMap<DailyCashFlow, DailyCashFlowDto>();
             CreateMap<CreateUpdateDailyCashFlowDto, DailyCashFlow>();
+            CreateMap<CreateUpdateRecurringExpenseDto, RecurringExpense>();
+            CreateMap<RecurringExpense, RecurringExpenseDto>();
         }
     }
 }

@@ -5,6 +5,7 @@ using Tulumba.Entities.Employee;
 using Tulumba.Entities.Expense;
 using Tulumba.Entities.ExpenseType;
 using Tulumba.Entities.MonthlyCashFlow;
+using Tulumba.Entities.RecurringExpense;
 using Tulumba.Entities.Shop;
 using Volo.Abp.AuditLogging.EntityFrameworkCore;
 using Volo.Abp.BackgroundJobs.EntityFrameworkCore;
@@ -43,6 +44,7 @@ namespace Tulumba.EntityFrameworkCore
         public DbSet<ExpenseType> ExpenseTypes { get; set; }
         public DbSet<Expense> Expenses { get; set; }
         public DbSet<DailyCashFlow> DailyCashFlows { get; set; }
+        public DbSet<RecurringExpense> RecurringExpenses { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -116,6 +118,16 @@ namespace Tulumba.EntityFrameworkCore
                 b.ConfigureByConvention(); //auto configure for the base class props
                 b.Property(x => x.Date).IsRequired();
                 b.Property(x => x.ShopId).IsRequired();
+            });
+                        
+            builder.Entity<RecurringExpense>(b =>
+            {
+                b.ToTable(TulumbaConsts.DbTablePrefix + "RecurringExpenses",
+                    TulumbaConsts.DbSchema);
+                b.ConfigureByConvention(); //auto configure for the base class props
+                b.Property(x => x.ExpenseTypeId).IsRequired();
+                b.Property(x => x.ShopId).IsRequired();
+                b.Property(x => x.Amount).IsRequired();
             });
         }
         /* Add DbSet properties for your Aggregate Roots / Entities here. */

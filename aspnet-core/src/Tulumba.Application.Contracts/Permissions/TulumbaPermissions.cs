@@ -64,5 +64,14 @@
             public const string Edit = Default + ".Edit";
             public const string Delete = Default + ".Delete";
         }
+        
+        public static class RecurringExpenses
+        {
+            public const string Default = GroupName + ".RecurringExpenses";
+            public const string Get = Default + ".Get";
+            public const string Create = Default + ".Create";
+            public const string Edit = Default + ".Edit";
+            public const string Delete = Default + ".Delete";
+        }
     }
 }
