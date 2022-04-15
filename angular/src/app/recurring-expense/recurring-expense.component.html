@@ -46,6 +46,13 @@
         </ng-template>
       </ngx-datatable-column>
 
+      <ngx-datatable-column [name]="'::RecurringExpense:Active' | abpLocalization" prop="active">
+        <ng-template let-row="row" ngx-datatable-cell-template>
+            <span *ngIf="row.active === false">Ne</span>
+            <span *ngIf="row.active === true">Da</span>
+        </ng-template>
+      </ngx-datatable-column>
+
       <ngx-datatable-column
         [name]="'::Actions' | abpLocalization"
         [maxWidth]="150"
@@ -124,6 +131,13 @@
           class="form-control"
           formControlName="amount"
         />
+      </div>
+
+      <div class="form-group">
+        <label for="active">{{ '::RecurringExpense:Active' | abpLocalization }}</label
+        ><span> * </span>
+        <br />
+        <input type="checkbox" formControlName="active" id="active" class="form-control" />
       </div>
     </form>
   </ng-template>

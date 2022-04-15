@@ -101,8 +101,8 @@
         "Filter":"Filter",
         "Filter:DateGTE":"Do datuma",
         "Filter:DateLTE":"Od datuma",
-        "Filter:Refresh":"Osvježi filtere"
-        
+        "Filter:Refresh":"Osvježi filtere",
+        "RecurringExpense:Active": "Aktivan"
 
     }
 }

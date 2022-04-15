@@ -6,4 +6,3 @@ export * from './expense.service';
 export * from './monthly-cash-flow.service';
 export * from './recurring-expense.service';
 export * from './shop.service';
-export * from './recurring-expense.service';

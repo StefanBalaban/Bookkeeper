@@ -80,6 +80,8 @@ export class RecurringExpenseComponent implements OnInit {
     this.recurringExpenseService.get(id).subscribe(recurringExpense => {
       this.selectedRecurringExpense = recurringExpense;
       this.buildForm();
+      this.form.controls['expenseTypeId'].disable();
+      this.form.controls['shopId'].disable();
       this.isModalOpen = true;
     });
   }
@@ -98,6 +100,7 @@ export class RecurringExpenseComponent implements OnInit {
       expenseTypeId: [this.selectedRecurringExpense.expenseTypeId || '', Validators.required],
       shopId: [this.selectedRecurringExpense.shopId || '', Validators.required],
       amount: [this.selectedRecurringExpense.amount || 0, Validators.required],
+      active: [this.selectedRecurringExpense.active || true, Validators.required],
     });
   }
 
@@ -105,6 +108,8 @@ export class RecurringExpenseComponent implements OnInit {
     if (this.form.invalid) {
       return;
     }
+    this.form.controls['expenseTypeId'].enable();
+    this.form.controls['shopId'].enable();
 
     const request = this.selectedRecurringExpense.id
       ? this.recurringExpenseService.update(this.selectedRecurringExpense.id, this.form.value)
