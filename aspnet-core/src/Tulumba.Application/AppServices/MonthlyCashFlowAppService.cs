@@ -1,11 +1,17 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Tulumba.Application.Contracts.Dtos.MonthlyCashFlow;
 using Tulumba.Application.Contracts.Interfaces;
 using Tulumba.Application.Extensions;
+using Tulumba.Entities.DailyCashFlow;
+using Tulumba.Entities.DailyEarning;
+using Tulumba.Entities.Expense;
 using Tulumba.Entities.MonthlyCashFlow;
 using Tulumba.Permissions;
 using Volo.Abp.Application.Dtos;
@@ -26,7 +32,8 @@ public class MonthlyCashFlowAppService :
     private readonly AppServiceUtils _appServiceUtils;
     private readonly IRepository<MonthlyCashFlow, Guid> _monthlyCashFlowRepository;
 
-    public MonthlyCashFlowAppService(IRepository<MonthlyCashFlow, Guid> monthlyCashFlowRepository,
+    public MonthlyCashFlowAppService(
+        IRepository<MonthlyCashFlow, Guid> monthlyCashFlowRepository,
         AppServiceUtils appServiceUtils)
         : base(monthlyCashFlowRepository)
     {
@@ -50,51 +57,53 @@ public class MonthlyCashFlowAppService :
     [Authorize(TulumbaPermissions.MonthlyCashFlows.Get)]
     public override async Task<PagedResultDto<MonthlyCashFlowDto>> GetListAsync(GetMonthlyCashFlowListDto input)
     {
-        var monthlyCashFlows = new List<MonthlyCashFlow>();
+        var monthlyCashFlows = new List<MonthlyCashFlowDto>();
 
         if (string.IsNullOrWhiteSpace(input.Sorting))
         {
             input.Sorting = nameof(MonthlyCashFlow.Date) + " DESC";
         }
 
-        if (
-            !input.ShopId.HasValue &&
-            !input.DateGTE.HasValue &&
-            !input.DateLTE.HasValue
-        )
-        {
-            monthlyCashFlows =
-                await _monthlyCashFlowRepository.GetPagedListAsync(input.SkipCount, input.MaxResultCount,
-                    input.Sorting);
-        }
-        else
-        {
-            var query = _monthlyCashFlowRepository
-                .Where(x =>
-                    (!input.ShopId.HasValue || x.ShopId == input.ShopId) &&
-                    (!input.DateGTE.HasValue || x.Date.Date <= input.DateGTE.Value.Date) &&
-                    (!input.DateLTE.HasValue || x.Date.Date >= input.DateLTE.Value.Date));
+        var query = _monthlyCashFlowRepository
+            .Where(x =>
+                (!input.ShopId.HasValue || x.ShopId == input.ShopId) &&
+                (!input.DateGTE.HasValue || x.Date.Date <= input.DateGTE.Value.Date) &&
+                (!input.DateLTE.HasValue || x.Date.Date >= input.DateLTE.Value.Date));
 
-            var sorting = input.Sorting.Split(' ');
-            monthlyCashFlows = sorting[1].ToUpper().Equals("DESC")
+        var sorting = input.Sorting.Split(' ');
+        query = sorting[1].ToUpper().Equals("DESC")
                 ? query.OrderByDescending(sorting[0])
                     .Skip(input.SkipCount)
                     .Take(input.MaxResultCount)
-                    .ToList()
+
                 : query.OrderBy(sorting[0])
                     .Skip(input.SkipCount)
                     .Take(input.MaxResultCount)
-                    .ToList();;
-        }
+            ;
+
 
         var totalCount = await _monthlyCashFlowRepository.CountAsync(x =>
             (!input.ShopId.HasValue || x.ShopId == input.ShopId) &&
             (!input.DateGTE.HasValue || x.Date.Date <= input.DateGTE.Value.Date) &&
             (!input.DateLTE.HasValue || x.Date.Date >= input.DateLTE.Value.Date));
 
+
+        monthlyCashFlows = await query
+            .Select(x => new MonthlyCashFlowDto
+            {
+                Id = x.Id,
+                ShopId = x.ShopId,
+                Date = x.Date,
+                Sum =  
+                    x.DailyCashFlows.Sum(y => y.DailyEarnings.Sum(z => z.EarningAmount)) 
+                    - x.DailyCashFlows.Sum(y => y.Expenses.Sum(z => z.Amount))
+                    - x.Expenses.Sum(y => y.Amount)
+            })
+            .ToListAsync();
+        
         return new PagedResultDto<MonthlyCashFlowDto>(
             totalCount,
-            ObjectMapper.Map<List<MonthlyCashFlow>, List<MonthlyCashFlowDto>>(monthlyCashFlows)
+            monthlyCashFlows
         );
     }
 }

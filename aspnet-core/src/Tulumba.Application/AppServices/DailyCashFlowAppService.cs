@@ -1,15 +1,13 @@
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.Extensions.Logging;
+using Microsoft.EntityFrameworkCore;
 using Tulumba.Application.Contracts.Dtos.DailyCashFlow;
 using Tulumba.Application.Contracts.Interfaces;
 using Tulumba.Application.Extensions;
 using Tulumba.Entities.DailyCashFlow;
-using Tulumba.Entities.MonthlyCashFlow;
 using Tulumba.Permissions;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Application.Services;
@@ -55,51 +53,48 @@ public class DailyCashFlowAppService :
     [Authorize(TulumbaPermissions.DailyCashFlows.Get)]
     public override async Task<PagedResultDto<DailyCashFlowDto>> GetListAsync(GetDailyCashFlowListDto input)
     {
-        var dailyCashFlows = new List<DailyCashFlow>();
-        
+        var dailyCashFlows = new List<DailyCashFlowDto>();
+
         if (string.IsNullOrWhiteSpace(input.Sorting))
         {
             input.Sorting = nameof(DailyCashFlow.Date) + " DESC";
         }
-        
-        if (
-            !input.ShopId.HasValue &&
-            !input.DateGTE.HasValue &&
-            !input.DateLTE.HasValue
-        )
-        {
 
-            dailyCashFlows =
-                await _dailyCashFlowRepository.GetPagedListAsync(input.SkipCount, input.MaxResultCount, input.Sorting);
-        }
-        else
-        {
+        var query = _dailyCashFlowRepository.Where(x =>
+            (!input.ShopId.HasValue || x.ShopId == input.ShopId) &&
+            (!input.DateGTE.HasValue || x.Date.Date.Date <= input.DateGTE.Value.Date) &&
+            (!input.DateLTE.HasValue || x.Date.Date.Date >= input.DateLTE.Value.Date));
 
-            var query = _dailyCashFlowRepository.Where(x =>
-                (!input.ShopId.HasValue || x.ShopId == input.ShopId) &&
-                (!input.DateGTE.HasValue || x.Date.Date.Date <= input.DateGTE.Value.Date) &&
-                (!input.DateLTE.HasValue || x.Date.Date.Date >= input.DateLTE.Value.Date));
-            
-            var sorting = input.Sorting.Split(' ');
-            dailyCashFlows = sorting[1].ToUpper().Equals("DESC")
+        var sorting = input.Sorting.Split(' ');
+        query = sorting[1].ToUpper().Equals("DESC")
                 ? query.OrderByDescending(sorting[0])
                     .Skip(input.SkipCount)
                     .Take(input.MaxResultCount)
-                    .ToList()
+
                 : query.OrderBy(sorting[0])
                     .Skip(input.SkipCount)
                     .Take(input.MaxResultCount)
-                    .ToList();
-        }
+            ;
 
         var totalCount = await _dailyCashFlowRepository.CountAsync(x =>
             (!input.ShopId.HasValue || x.ShopId == input.ShopId) &&
             (!input.DateGTE.HasValue || x.Date.Date.Date <= input.DateGTE.Value.Date) &&
             (!input.DateLTE.HasValue || x.Date.Date.Date >= input.DateLTE.Value.Date));
 
+        dailyCashFlows = await query.Select(x => new DailyCashFlowDto
+            {
+                Id = x.Id,
+                ShopId = x.ShopId,
+                Date = x.Date,
+                Sum = x.DailyEarnings.Sum(y => y.EarningAmount)
+                      - x.Expenses.Sum(y => y.Amount)
+                
+            })
+            .ToListAsync();
+        
         return new PagedResultDto<DailyCashFlowDto>(
             totalCount,
-            ObjectMapper.Map<List<DailyCashFlow>, List<DailyCashFlowDto>>(dailyCashFlows)
+            dailyCashFlows
         );
     }
 }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Tulumba.Application.Contracts.Dtos.Expense;
 using Tulumba.Application.Contracts.Interfaces;
@@ -137,42 +138,28 @@ public class ExpenseAppService :
             input.Sorting = nameof(Expense.Date) + " DESC";
         }
 
-        if (
-            !input.ExpenseTypeId.HasValue &&
-            !input.ShopId.HasValue &&
-            !input.Amount.HasValue &&
-            !input.EmployeeId.HasValue &&
-            !input.DateGTE.HasValue &&
-            !input.DateLTE.HasValue &&
-            !input.ExpenseCategory.HasValue
-        )
-        {
-            expenses = await _expenseRepository.GetPagedListAsync(input.SkipCount, input.MaxResultCount, input.Sorting);
-        }
-        else
-        {
-            var query = _expenseRepository.Where(x =>
-                    (!input.ExpenseTypeId.HasValue || x.ExpenseTypeId == input.ExpenseTypeId) &&
-                    (!input.ShopId.HasValue || x.ShopId == input.ShopId) &&
-                    (!input.Amount.HasValue || x.Amount == input.Amount) &&
-                    (!input.EmployeeId.HasValue || x.EmployeeId == input.EmployeeId) &&
-                    (!input.DateGTE.HasValue || x.Date.Date <= input.DateGTE.Value.Date) &&
-                    (!input.DateLTE.HasValue || x.Date.Date >= input.DateLTE.Value.Date) &&
-                    (!input.ExpenseCategory.HasValue || x.ExpenseType.ExpenseCategory == input.ExpenseCategory));
+        var query = _expenseRepository.Where(x =>
+            (!input.ExpenseTypeId.HasValue || x.ExpenseTypeId == input.ExpenseTypeId) &&
+            (!input.ShopId.HasValue || x.ShopId == input.ShopId) &&
+            (!input.Amount.HasValue || x.Amount == input.Amount) &&
+            (!input.EmployeeId.HasValue || x.EmployeeId == input.EmployeeId) &&
+            (!input.DateGTE.HasValue || x.Date.Date <= input.DateGTE.Value.Date) &&
+            (!input.DateLTE.HasValue || x.Date.Date >= input.DateLTE.Value.Date) &&
+            (!input.ExpenseCategory.HasValue || x.ExpenseType.ExpenseCategory == input.ExpenseCategory));
 
-            var sorting = input.Sorting.Split(' ');
-            Logger.LogInformation("Sort field: " + sorting[0]);
-            Logger.LogInformation("Sort direction: " + sorting[1]);
-            expenses = sorting[1].ToUpper().Equals("DESC")
-                ? query.OrderByDescending(sorting[0])
-                    .Skip(input.SkipCount)
-                    .Take(input.MaxResultCount)
-                    .ToList()
-                : query.OrderBy(sorting[0])
-                    .Skip(input.SkipCount)
-                    .Take(input.MaxResultCount)
-                    .ToList();
-        }
+        var sorting = input.Sorting.Split(' ');
+        Logger.LogInformation("Sort field: " + sorting[0]);
+        Logger.LogInformation("Sort direction: " + sorting[1]);
+        expenses = sorting[1].ToUpper().Equals("DESC")
+            ? await query.OrderByDescending(sorting[0])
+                .Skip(input.SkipCount)
+                .Take(input.MaxResultCount)
+                .ToListAsync()
+            : await query.OrderBy(sorting[0])
+                .Skip(input.SkipCount)
+                .Take(input.MaxResultCount)
+                .ToListAsync();
+
 
         var totalCount = await _expenseRepository.CountAsync(x =>
             (!input.ExpenseTypeId.HasValue || x.ExpenseTypeId == input.ExpenseTypeId) &&

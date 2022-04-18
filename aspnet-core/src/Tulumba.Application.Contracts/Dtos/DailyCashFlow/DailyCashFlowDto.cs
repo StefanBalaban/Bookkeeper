@@ -9,5 +9,6 @@ namespace Tulumba.Application.Contracts.Dtos.DailyCashFlow
         public Guid ShopId { get; set; }
         
         public Guid? MonthlyCashFlowId { get; set; }
+        public decimal Sum { get; set; }
     }
 }

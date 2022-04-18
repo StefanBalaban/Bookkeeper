@@ -9,6 +9,7 @@ export interface DailyCashFlowDto extends AuditedEntityDto<string> {
   date?: string;
   shopId?: string;
   monthlyCashFlowId?: string;
+  sum?: number;
 }
 
 export interface GetDailyCashFlowListDto extends PagedAndSortedResultRequestDto {

@@ -105,7 +105,7 @@
       prop="monthlyCashFlowSum"
     >
       <ng-template let-row="row" ngx-datatable-cell-template>
-        {{ getMonthlyCashFlowSum(row.id).toLocaleString('en-US', {minimumFractionDigits: 2}) }}
+        {{ (row.sum).toLocaleString('en-US', {minimumFractionDigits: 2}) }}
       </ng-template>
     </ngx-datatable-column>
 

@@ -21,7 +21,9 @@ import { switchMap } from 'rxjs/operators';
   selector: 'app-monthly-cash-flow',
   templateUrl: './monthly-cash-flow.component.html',
   styleUrls: ['./monthly-cash-flow.component.scss'],
-  providers: [ListService, { provide: NgbDateAdapter, useClass: NgbDateNativeAdapter }],
+  providers: [
+    ListService,
+    { provide: NgbDateAdapter, useClass: NgbDateNativeAdapter }],
 })
 export class MonthlyCashFlowComponent implements OnInit {
   monthlyCashFlow = { items: [], totalCount: 0 } as PagedResultDto<MonthlyCashFlowDto>;
@@ -29,12 +31,6 @@ export class MonthlyCashFlowComponent implements OnInit {
   isModalOpen = false;
   selectedMonthlyCashFlow = {} as MonthlyCashFlowDto;
   shops: ShopDto[] = [];
-  expenses: ExpenseDto[] = [];
-  dailyEarnings: DailyEarningDto[] = [];
-  dailyCashFlows: DailyCashFlowDto[] = [];
-  expenseRequestFinished = false;
-  dailyEarningRequestFinished = false;
-  dailyCashFlowRequestFinished = false;
   sum = 0;
   query: any = {};
   filterForm: FormGroup;
@@ -43,11 +39,8 @@ export class MonthlyCashFlowComponent implements OnInit {
     public readonly list: ListService,
     private monthlyCashFlowService: MonthlyCashFlowService,
     private fb: FormBuilder,
-    private confirmation: ConfirmationService, // inject the ConfirmationService
+    private confirmation: ConfirmationService,
     private shopService: ShopService,
-    private dailyCashFlowService: DailyCashFlowService,
-    private expenseService: ExpenseService,
-    private dailyEarningService: DailyEarningService
   ) {}
 
   ngOnInit() {
@@ -61,52 +54,6 @@ export class MonthlyCashFlowComponent implements OnInit {
     );
 
     shopRequest.subscribe(response => (this.shops = response.items));
-
-    var dailyCashFlowRequest = this.dailyCashFlowService
-      .getList({ maxResultCount: 1, skipCount: 0 })
-      .pipe(
-        switchMap(response =>
-          this.dailyCashFlowService.getList({
-            maxResultCount: response.totalCount !== 0 ? response.totalCount : 1,
-            skipCount: 0,
-          })
-        )
-      );
-
-    dailyCashFlowRequest.subscribe(response => {
-      this.dailyCashFlows = response.items;
-      this.dailyCashFlowRequestFinished = true;
-    });
-
-    var expenseRequest = this.expenseService.getList({ maxResultCount: 1, skipCount: 0 }).pipe(
-      switchMap(response =>
-        this.expenseService.getList({
-          maxResultCount: response.totalCount !== 0 ? response.totalCount : 1,
-          skipCount: 0,
-        })
-      )
-    );
-
-    expenseRequest.subscribe(response => {
-      this.expenses = response.items;
-      this.expenseRequestFinished = true;
-    });
-
-    var dailyEarningRequest = this.dailyEarningService
-      .getList({ maxResultCount: 1, skipCount: 0 })
-      .pipe(
-        switchMap(response =>
-          this.dailyEarningService.getList({
-            maxResultCount: response.totalCount !== 0 ? response.totalCount : 1,
-            skipCount: 0,
-          })
-        )
-      );
-
-    dailyEarningRequest.subscribe(response => {
-      this.dailyEarnings = response.items;
-      this.dailyEarningRequestFinished = true;
-    });
 
     this.createFilterForm();
     const monthlyCashFlowStreamCreator = query =>
@@ -124,26 +71,6 @@ export class MonthlyCashFlowComponent implements OnInit {
     return ` ${date?.getUTCMonth() + 1}.${date?.getFullYear()}.`;
   }
 
-  getMonthlyCashFlowSum(monthlyCashFlowId) {
-    let sum = 0;
-    this.dailyCashFlows
-      .filter(dailyCashFlow => dailyCashFlow.monthlyCashFlowId === monthlyCashFlowId)
-      .forEach(dailyCashFlow => {
-        this.expenses
-          .filter(expense => expense.dailyCashFlowId === dailyCashFlow.id)
-          .forEach(expense => (sum -= expense.amount));
-        this.dailyEarnings
-          .filter(dailyEarning => dailyEarning.dailyCashFlowId === dailyCashFlow.id)
-          .forEach(dailyEarning => (sum += dailyEarning.earningAmount));
-      });
-
-    this.expenses
-      .filter(x => x.monthlyCashFlowId === monthlyCashFlowId)
-      .forEach(x => (sum -= x.amount));
-
-    return sum;
-  }
-
   getSum() {
     this.sum = 0;
     this.monthlyCashFlowService
@@ -154,7 +81,7 @@ export class MonthlyCashFlowComponent implements OnInit {
       })
       .subscribe(response => {
         response.items.forEach(monthlyCashFlow => {
-          this.sum += this.getMonthlyCashFlowSum(monthlyCashFlow.id);
+          this.sum += monthlyCashFlow.sum;
         });
       });
   }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
 using Tulumba.Application.Contracts.Dtos.DailyEarning;
 using Tulumba.Application.Contracts.Interfaces;
 using Tulumba.Application.Extensions;
@@ -98,33 +99,21 @@ public class DailyEarningAppService :
             input.Sorting = nameof(DailyEarning.Date) + " DESC";
         }
 
-        if (
-            !input.ShopId.HasValue &&
-            !input.DateGTE.HasValue &&
-            !input.DateLTE.HasValue
-        )
-        {
-            dailyEarnings =
-                await _dailyEarningRepository.GetPagedListAsync(input.SkipCount, input.MaxResultCount, input.Sorting);
-        }
-        else
-        {
-            var query = _dailyEarningRepository.Where(x =>
-                (!input.ShopId.HasValue || x.ShopId == input.ShopId) &&
-                (!input.DateGTE.HasValue || x.Date.Date <= input.DateGTE.Value.Date) &&
-                (!input.DateLTE.HasValue || x.Date.Date >= input.DateLTE.Value.Date));
+        var query = _dailyEarningRepository.Where(x =>
+            (!input.ShopId.HasValue || x.ShopId == input.ShopId) &&
+            (!input.DateGTE.HasValue || x.Date.Date <= input.DateGTE.Value.Date) &&
+            (!input.DateLTE.HasValue || x.Date.Date >= input.DateLTE.Value.Date));
 
-            var sorting = input.Sorting.Split(' ');
-            dailyEarnings = sorting[1].ToUpper().Equals("DESC")
-                ? query.OrderByDescending(sorting[0])
-                    .Skip(input.SkipCount)
-                    .Take(input.MaxResultCount)
-                    .ToList()
-                : query.OrderBy(sorting[0])
-                    .Skip(input.SkipCount)
-                    .Take(input.MaxResultCount)
-                    .ToList();
-        }
+        var sorting = input.Sorting.Split(' ');
+        dailyEarnings = sorting[1].ToUpper().Equals("DESC")
+            ? await query.OrderByDescending(sorting[0])
+                .Skip(input.SkipCount)
+                .Take(input.MaxResultCount)
+                .ToListAsync()
+            : await query.OrderBy(sorting[0])
+                .Skip(input.SkipCount)
+                .Take(input.MaxResultCount)
+                .ToListAsync();
 
         var totalCount = await _dailyEarningRepository.CountAsync(x =>
             (!input.ShopId.HasValue || x.ShopId == input.ShopId) &&

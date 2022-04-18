@@ -5,7 +5,7 @@ events { worker_connections 1024; }
 http {          
     server {  
         listen 0.0.0.0:8083;  
-        server_name tulumba2.ba;  
+        server_name localhost;  
               
         location / {  
             proxy_pass         http://${API}:8083;  
@@ -21,7 +21,7 @@ http {
       
     server {  
         listen 0.0.0.0:8082;  
-        server_name tulumba2.ba;  
+        server_name localhost;  
           
         location / {  
             proxy_pass         http://${APP}:80;  

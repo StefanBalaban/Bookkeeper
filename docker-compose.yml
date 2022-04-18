@@ -5,20 +5,16 @@ services:
     image: postgres
     environment:
       POSTGRES_PASSWORD: example
-    ports:
-      - 127.0.0.1:5432:5432
-    volumes:
-      - ~/Tulumba/postgres:/var/lib/postgresql/data
   db-migrator:
     build:
       context: ./aspnet-core
       dockerfile: ./Dockerfile.DbMigrator
-    environment:
-      - ConnectionStrings:Default=Server=db;Port=5432;Database=tulumba;User ID=postgres;Password=example;
-      - IdentityServer:Clients:Tulumba_App:RootUrl=http://tulumba2.ba
-      - IdentityServer:Clients:Tulumba_Swagger:RootUrl=http://tulumba2.ba:8083
     depends_on:
       - db
+    environment:
+      - ConnectionStrings:Default=Server=db;Port=5432;Database=tulumba;User ID=postgres;Password=example;
+      - IdentityServer:Clients:Tulumba_App:RootUrl=http://localhost
+      - IdentityServer:Clients:Tulumba_Swagger:RootUrl=http://localhost:8083
   api:
     build:
       context: ./aspnet-core
@@ -27,12 +23,13 @@ services:
       - db-migrator
     environment:
       - ConnectionStrings:Default=Server=db;Port=5432;Database=tulumba;User ID=postgres;Password=example;
-      - AuthServer:Authority=http://tulumba2.ba:8083
+      - AuthServer:Authority=http://localhost:8083
       - AuthServer:DisableRegistration=true
-      - App:SelfUrl=http://tulumba2.ba:8083
-      - App:ClientUrl=http://tulumba2.ba
-      - App:CorsOrigins=http://tulumba2.ba
-      - App:RedirectAllowedUrls=http://tulumba2.ba
+      - App:SelfUrl=http://localhost:8083
+      - App:ClientUrl=http://localhost
+      - App:CorsOrigins=http://localhost
+      - App:RedirectAllowedUrls=http://localhost
+      - DOTNET_USE_POLLING_FILE_WATCHER=1
   app:
     build:
       context: ./angular
@@ -40,14 +37,14 @@ services:
     depends_on:
       - api
     environment:
-      - ANGULAR_CLIENT_URL_BASE=http://tulumba2.ba
-      - API_HOST_URL_BASE=http://tulumba2.ba:8083
+      - ANGULAR_CLIENT_URL_BASE=http://localhost
+      - API_HOST_URL_BASE=http://localhost:8083
   reverse_proxy:
     build:
       context: .
       dockerfile: ./Dockerfile
     ports:
-      #- 80:8082  
+      - 80:8082
       - 8083:8083
     links:
       - api

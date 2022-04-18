@@ -78,6 +78,13 @@ function configureRoutes(routesService: RoutesService) {
         layout: eLayoutType.application,
         requiredPolicy: 'Tulumba.ExpenseTypes',
       },
+      {
+        path: '/charts',
+        name: '::Menu:Charts',
+        parentName: '::Menu:TulumbaMenu',
+        layout: eLayoutType.application,
+        requiredPolicy: 'Tulumba.MonthlyCashFlows',
+      },
     ]);
   };
 }

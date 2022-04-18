@@ -14,4 +14,5 @@ export interface GetMonthlyCashFlowListDto extends PagedAndSortedResultRequestDt
 export interface MonthlyCashFlowDto extends AuditedEntityDto<string> {
   date?: string;
   shopId?: string;
+  sum?: number;
 }

@@ -33,15 +33,9 @@ export class DailyCashFlowComponent implements OnInit {
   isModalOpen = false;
   selectedDailyCashFlow = {} as DailyCashFlowDto;
   shops: ShopDto[] = [];
-  monthlyCashFlows: MonthlyCashFlowDto[] = [];
-  monthlyCashFlowsForShopId: MonthlyCashFlowDto[] = [];
-  expenses: ExpenseDto[] = [];
-  dailyEarnings: DailyEarningDto[] = [];
   sum = 0;
   query: any = {};
   filterForm: FormGroup;
-  expenseRequestFinished = false;
-  dailyEarningRequestFinished = false;
 
   constructor(
     @Inject('DAILY_CASH_FLOW_LIST') public readonly list: ListService,
@@ -49,9 +43,6 @@ export class DailyCashFlowComponent implements OnInit {
     private fb: FormBuilder,
     private confirmation: ConfirmationService, // inject the ConfirmationService
     private shopService: ShopService,
-    private monthlyCashFlowService: MonthlyCashFlowService,
-    private expenseService: ExpenseService,
-    private dailyEarningService: DailyEarningService
   ) {}
 
   ngOnInit() {
@@ -65,49 +56,6 @@ export class DailyCashFlowComponent implements OnInit {
     );
 
     shopRequest.subscribe(response => (this.shops = response.items));
-
-    var monthlyCashFlowRequest = this.monthlyCashFlowService
-      .getList({ maxResultCount: 1, skipCount: 0 })
-      .pipe(
-        switchMap(response =>
-          this.monthlyCashFlowService.getList({
-            maxResultCount: response.totalCount !== 0 ? response.totalCount : 1,
-            skipCount: 0,
-          })
-        )
-      );
-
-    monthlyCashFlowRequest.subscribe(response => (this.monthlyCashFlows = response.items));
-
-    var expenseRequest = this.expenseService.getList({ maxResultCount: 1, skipCount: 0 }).pipe(
-      switchMap(response =>
-        this.expenseService.getList({
-          maxResultCount: response.totalCount !== 0 ? response.totalCount : 1,
-          skipCount: 0,
-        })
-      )
-    );
-
-    expenseRequest.subscribe(response => {
-      this.expenses = response.items;
-      this.expenseRequestFinished = true;
-    });
-
-    var dailyEarningRequest = this.dailyEarningService
-      .getList({ maxResultCount: 1, skipCount: 0 })
-      .pipe(
-        switchMap(response =>
-          this.dailyEarningService.getList({
-            maxResultCount: response.totalCount !== 0 ? response.totalCount : 1,
-            skipCount: 0,
-          })
-        )
-      );
-
-    dailyEarningRequest.subscribe(response => {
-      this.dailyEarnings = response.items;
-      this.dailyEarningRequestFinished = true;
-    });
 
     this.createFilterForm();
     const dailyCashFlowStreamCreator = query =>
@@ -129,24 +77,9 @@ export class DailyCashFlowComponent implements OnInit {
       })
       .subscribe(response => {
         response.items.forEach(dailyCashFlow => {
-          this.expenses
-            .filter(expense => expense.dailyCashFlowId === dailyCashFlow.id)
-            .forEach(expense => (this.sum -= expense.amount));
-          this.dailyEarnings
-            .filter(dailyEarning => dailyEarning.dailyCashFlowId === dailyCashFlow.id)
-            .forEach(dailyEarning => (this.sum += dailyEarning.earningAmount));
+          this.sum += dailyCashFlow.sum
         });
       });
-  }
-  getDailyCashFlowSum(dailyCashFlowId) {
-    let sum = 0;
-    this.expenses
-            .filter(expense => expense.dailyCashFlowId === dailyCashFlowId)
-            .forEach(expense => (sum -= expense.amount));
-          this.dailyEarnings
-            .filter(dailyEarning => dailyEarning.dailyCashFlowId === dailyCashFlowId)
-            .forEach(dailyEarning => (sum += dailyEarning.earningAmount));
-    return sum;
   }
 
   refreshFilter() {
@@ -177,19 +110,10 @@ export class DailyCashFlowComponent implements OnInit {
     return this.shops.find(x => x.id === shopId)?.name;
   }
 
-  getMonthlyCashFlowDate(monthlyCashFlowId) {
-    if (!monthlyCashFlowId) return '';
-    const date = new Date(this.monthlyCashFlows.find(x => x.id == monthlyCashFlowId)?.date);
+  getMonthlyCashFlowDate(dailyCashFlowId) {
+    if (!dailyCashFlowId) return '';
+    const date = new Date(this.dailyCashFlow.items.find(x => x.id == dailyCashFlowId)?.date);
     return ` ${date?.getUTCMonth() + 1}.${date?.getFullYear()}.`;
-  }
-
-  selectShop(shopId) {
-    if (shopId) {
-      console.log({ shopId });
-      this.monthlyCashFlowsForShopId = this.monthlyCashFlows.filter(x => shopId.includes(x.shopId));
-      console.log({ monthlyCashFlowsForShopId: this.monthlyCashFlowsForShopId });
-      console.log({ monthlyCashFlows: this.monthlyCashFlows });
-    }
   }
 
   createDailyCashFlow() {

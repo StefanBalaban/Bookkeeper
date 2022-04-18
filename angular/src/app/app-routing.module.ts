@@ -33,6 +33,7 @@ const routes: Routes = [
   { path: 'expenses', loadChildren: () => import('./expense/expense.module').then(m => m.ExpenseModule) },
   { path: 'daily-cash-flows', loadChildren: () => import('./daily-cash-flow/daily-cash-flow.module').then(m => m.DailyCashFlowModule) },
   { path: 'recurring-expenses', loadChildren: () => import('./recurring-expense/recurring-expense.module').then(m => m.RecurringExpenseModule) },
+  { path: 'charts', loadChildren: () => import('./chart/chart.module').then(m => m.ChartModule) },
 ];
 
 @NgModule({

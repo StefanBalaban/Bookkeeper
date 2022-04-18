@@ -16,6 +16,7 @@ import { AppComponent } from './app.component';
 import { APP_ROUTE_PROVIDER } from './route.provider';
 import { storeLocaleData } from '@abp/ng.core/locale';
 import { LogoComponent } from './logo/logo.component';
+import { NgChartsModule } from 'ng2-charts';
 import(
 /* webpackChunkName: "_bs-js"*/
 /* webpackMode: "eager" */
@@ -43,6 +44,7 @@ import(
     SettingManagementConfigModule.forRoot(),
     NgxsModule.forRoot(),
     ThemeBasicModule.forRoot(),
+    NgChartsModule
   ],
   declarations: [AppComponent, LogoComponent],
   providers: [APP_ROUTE_PROVIDER],
