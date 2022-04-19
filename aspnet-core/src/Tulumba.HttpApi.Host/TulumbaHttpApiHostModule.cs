@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using IdentityServer4.Configuration;
+using IdentityServer4.Extensions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Hosting;
@@ -220,6 +221,7 @@ public class TulumbaHttpApiHostModule : AbpModule
         // If registration is disabled in the ENV then this middleware will reject the request by returning a 404 error
         app.Use(async (httpContext, next) =>
         {
+            //httpContext.SetIdentityServerOrigin(env.BuildConfiguration()["AuthServer:Authority"]);
             if (Convert.ToBoolean(env.BuildConfiguration()["AuthServer:DisableRegistration"]) &&
                 httpContext.Request.Path.Value.Equals("/Account/Register"))
             {

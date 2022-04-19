@@ -2,7 +2,7 @@ FROM node:14.18.1 as build
 
 WORKDIR /app
 
-COPY package.json yarn.lock replace_env-variables.sh ./
+COPY package.json replace_env-variables.sh ./
 ARG ANGULAR_CLIENT_URL_BASE
 ARG API_HOST_URL_BASE
 ENV ANGULAR_CLIENT_URL_BASE "$ANGULAR_CLIENT_URL_BASE"
