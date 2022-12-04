@@ -19,6 +19,7 @@ using Tulumba.MultiTenancy;
 using Volo.Abp;
 using Volo.Abp.Account;
 using Volo.Abp.Account.Web;
+using Volo.Abp.Application.Dtos;
 using Volo.Abp.AspNetCore.Authentication.JwtBearer;
 using Volo.Abp.AspNetCore.MultiTenancy;
 using Volo.Abp.AspNetCore.Mvc;
@@ -64,6 +65,12 @@ public class TulumbaHttpApiHostModule : AbpModule
         ConfigureCors(context, configuration);
         ConfigureSwaggerServices(context, configuration);
         ConfigureIdentityServer(configuration);
+        ConfigureMaxDtoResult();
+    }
+
+    private void ConfigureMaxDtoResult()
+    {
+        LimitedResultRequestDto.MaxMaxResultCount = 100000;
     }
 
     private void ConfigureIdentityServer(IConfiguration configuration)
@@ -221,7 +228,7 @@ public class TulumbaHttpApiHostModule : AbpModule
         // If registration is disabled in the ENV then this middleware will reject the request by returning a 404 error
         app.Use(async (httpContext, next) =>
         {
-            //httpContext.SetIdentityServerOrigin(env.BuildConfiguration()["AuthServer:Authority"]);
+            httpContext.SetIdentityServerOrigin(env.BuildConfiguration()["AuthServer:Authority"]);
             if (Convert.ToBoolean(env.BuildConfiguration()["AuthServer:DisableRegistration"]) &&
                 httpContext.Request.Path.Value.Equals("/Account/Register"))
             {
