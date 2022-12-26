@@ -334,10 +334,24 @@ export class ExpenseComponent implements OnInit {
 
 
     request.subscribe(() => {
-      this.isModalOpen = false;
-      this.form.reset();
+      this.resetForm();
       this.list.get();
     });
+  }
+
+  // method that resets the form fields to amount and employeeId and expenseId
+  resetForm() {
+    if (this.selectedExpense?.id) {
+      // if we are editing an expense close modal and reset form
+      this.isModalOpen = false;
+      this.form.reset();
+
+    }
+    else {
+
+    this.form.controls['amount'].setValue(0);
+    this.form.controls['employeeId'].setValue(null);
+    }
   }
 
   createFilterForm() {
@@ -356,8 +370,11 @@ export class ExpenseComponent implements OnInit {
   }
 
   setExpenseTypeForCategoryInForm() {
+    
     this.expenseTypesForm = this.expenseTypes.filter(x => x.expenseCategory === this.form.controls['expenseCategory'].value)
     this.form.controls['expenseTypeId'].setValue(this.expenseTypesForm[0]?.id);
     this.setFormForChangedExpenseType();
   }
+
+
 }

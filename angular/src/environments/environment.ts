@@ -10,7 +10,7 @@ export const environment = {
     logoUrl: '',
   },
   oAuthConfig: {
-    issuer: 'https://localhost:44389',
+    issuer: 'http://localhost:8083',
     redirectUri: baseUrl,
     clientId: 'Tulumba_App',
     responseType: 'code',
@@ -19,7 +19,7 @@ export const environment = {
   },
   apis: {
     default: {
-      url: 'https://localhost:44389',
+      url: 'http://localhost:8083',
       rootNamespace: 'Tulumba',
     },
   },
